@@ -1,0 +1,20 @@
+[package]
+name = 'ungine'
+version = '0.1.0'
+authors = ['ENDERZOMBI102']
+edition = '2018'
+description = 'A source-inspired game engine'
+repository = 'https://github.com/ENDERZOMBI102/Ungine.rs'
+license = 'MIT'
+
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[workspace]
+members = [
+	'.', 'tier-0'
+]
+
+
+[dependencies]
+dlopen = "0.1"
