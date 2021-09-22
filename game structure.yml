@@ -1,0 +1,47 @@
+# game folder structure
+
+Game:
+   - bin:
+      - angelscript.dll
+      - python.dll
+      - phonome.dll
+      - engine.dll
+      - tier0.dll
+      - wgpu.dll
+      - richpresence.dll
+   - plugins:
+      - emptyplugin.dll
+   - game:
+      - bin:
+         - client.dll
+         - server.dll
+      - cfg:
+         - config.cfg # contains console commands to setup options
+         - video.cfg # video options
+      - save: # contains quicksaves and full-saves
+         - mapname.save
+      - maps: # contains the game's maps
+         - mapname.EXT
+      - screenshots: # contain screenshots
+         - mapname_date.png
+      - scripts: # contains the game's scripts
+         - escript:
+            - gamescript0.as
+            - gamescript1.py
+            - gamescript2.nut
+         - datascript.ds
+      - models:
+         - model0.mdl # valve declaration
+         - model0.vtx # valve texture references
+         - model0.vvd # valve meshes
+         - model1.obj # mesh + texture references + declaration
+      - materials:
+         - material0.vmt # valve metadata
+         - material0.vtf # valve texture
+         - material1.ml # texture + metadata
+      - sounds:
+         - sound0.wav
+         - sound1.ogg
+      - media:
+         - video.webm
+   - game.exe

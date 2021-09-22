@@ -12,9 +12,9 @@ license = 'MIT'
 
 [workspace]
 members = [
-	'.', 'tier-0'
+	'.', 'tier_0'
 ]
 
 
 [dependencies]
-dlopen = "0.1"
+tier_0 = { path = 'tier_0' }
