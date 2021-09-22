@@ -12,9 +12,9 @@ license = 'MIT'
 
 [workspace]
 members = [
-	'.', 'tier_0'
+	'.', 'tier0'
 ]
 
 
 [dependencies]
-tier_0 = { path = 'tier_0' }
+tier0 = { path = 'tier0' }
