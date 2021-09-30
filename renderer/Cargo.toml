@@ -5,3 +5,4 @@ edition = '2018'
 description = 'Ungines Renderer'
 
 [dependencies]
+wgpu = "0.10.2"
