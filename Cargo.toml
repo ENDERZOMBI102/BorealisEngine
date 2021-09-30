@@ -12,9 +12,13 @@ license = 'MIT'
 
 [workspace]
 members = [
-	'.', 'tier0'
+	'.', 'tier0', 'renderer'
 ]
 
 
 [dependencies]
 tier0 = { path = 'tier0' }
+renderer = { path = 'renderer' }
+rand = "0.8.4"
+# cfg-if = "1.0.0" conditional compilation
+wgpu = "0.10.2"

@@ -4,7 +4,7 @@ Game:
    - bin:
       - angelscript.dll
       - python.dll
-      - phonome.dll
+      - fmod.dll
       - engine.dll
       - tier0.dll
       - wgpu.dll

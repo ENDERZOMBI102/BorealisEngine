@@ -1,6 +1,6 @@
 use std::ptr::null;
 
-struct Argument {
+pub struct Argument {
 	key: &'static String,
 	value: Option<&'static String>
 }
@@ -21,7 +21,7 @@ impl Argument {
 	}
 }
 
-struct CommandLine {
+pub struct CommandLine {
 	arguments: Vec<Argument>
 }
 
@@ -39,8 +39,6 @@ impl CommandLine {
 	}
 }
 
-pub fn get_instance() -> &'static CommandLine {
-	return &INSTANCE;
+pub fn get_instance() -> CommandLine {
+	return CommandLine::new();
 }
-
-static INSTANCE: CommandLine = CommandLine::new();
