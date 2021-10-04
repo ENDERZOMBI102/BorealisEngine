@@ -11,6 +11,7 @@ license = 'MIT'
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace]
+resolver='2'
 members = [
 	'.', 'tier0', 'renderer'
 ]
@@ -20,4 +21,3 @@ members = [
 tier0 = { path = 'tier0' }
 renderer = { path = 'renderer' }
 rand = "0.8.4"
-# cfg-if = "1.0.0" conditional compilation

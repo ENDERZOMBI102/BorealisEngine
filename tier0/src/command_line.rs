@@ -1,5 +1,3 @@
-use std::ptr::null;
-
 pub struct Argument {
 	key: &'static String,
 	value: Option<&'static String>

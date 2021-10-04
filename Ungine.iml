@@ -6,6 +6,7 @@
       <sourceFolder url="file://$MODULE_DIR$/brigadier/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tier0/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/renderer/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

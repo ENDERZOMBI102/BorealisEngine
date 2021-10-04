@@ -8,6 +8,7 @@ Game:
       - engine.dll
       - tier0.dll
       - wgpu.dll
+      - renderer.dll
       - richpresence.dll
    - plugins:
       - emptyplugin.dll
