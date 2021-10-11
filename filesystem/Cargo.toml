@@ -1,0 +1,10 @@
+[package]
+name = 'filesystem'
+version = '0.1.0'
+edition = '2018'
+description = 'FileSystem utilities'
+
+[lib]
+crate_type = ['dylib']
+
+[dependencies]

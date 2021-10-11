@@ -13,11 +13,13 @@ license = 'MIT'
 [workspace]
 resolver='2'
 members = [
-	'.', 'tier0', 'renderer'
+	'.', 'filesystem', 'renderer', 'richpresence', 'engine_utils'
 ]
 
 
 [dependencies]
-tier0 = { path = 'tier0' }
+filesystem = { path = 'filesystem' }
 renderer = { path = 'renderer' }
+richpresence = { path = 'richpresence' }
+engine_utils = { path = 'engine_utils' }
 rand = "0.8.4"

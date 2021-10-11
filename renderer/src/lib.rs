@@ -1,5 +1,3 @@
-#![crate_type = "dylib"]
-
 mod state;
 
 pub mod renderer {

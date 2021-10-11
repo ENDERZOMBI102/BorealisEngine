@@ -1,0 +1,3 @@
+[build]
+rustflags = [ '-Zshare-generics=off' ]
+incremental = false

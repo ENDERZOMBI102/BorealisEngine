@@ -6,7 +6,7 @@ Game:
       - python.dll
       - fmod.dll
       - engine.dll
-      - tier0.dll
+      - filesystem.dll
       - wgpu.dll
       - renderer.dll
       - richpresence.dll
