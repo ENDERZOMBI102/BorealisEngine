@@ -9,6 +9,7 @@
       <sourceFolder url="file://$MODULE_DIR$/engine_utils/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/filesystem/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/richpresence/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/engine/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

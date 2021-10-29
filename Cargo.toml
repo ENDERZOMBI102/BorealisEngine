@@ -13,7 +13,7 @@ license = 'MIT'
 [workspace]
 resolver='2'
 members = [
-	'.', 'filesystem', 'renderer', 'richpresence', 'engine_utils'
+	'.', 'filesystem', 'renderer', 'richpresence', 'engine_utils', 'engine'
 ]
 
 
@@ -22,4 +22,5 @@ filesystem = { path = 'filesystem' }
 renderer = { path = 'renderer' }
 richpresence = { path = 'richpresence' }
 engine_utils = { path = 'engine_utils' }
+engine = { path = 'engine' }
 rand = "0.8.4"
