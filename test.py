@@ -40,3 +40,8 @@ print(f"Executable:\n\t- \"{executable}\"")
 print("Arguments:")
 for arg in arguments:
 	print(f"\t- \"{arg}\"")
+	
+	
+	
+	
+	

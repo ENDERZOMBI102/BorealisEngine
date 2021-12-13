@@ -19,30 +19,41 @@ Game:
       - cfg:
          - config.cfg # contains console commands to setup options
          - video.cfg # video options
+         - mapload.cfg # exec'd every map first load
       - save: # contains quicksaves and full-saves
          - mapname.save
       - maps: # contains the game's maps
-         - mapname.EXT
+         - mapname.EXT # ( map? bsp? umap? emap? no ext? )
       - screenshots: # contain screenshots
          - mapname_date.png
       - scripts: # contains the game's scripts
-         - escript:
+         - escript: # stands for engine script
             - gamescript0.as
             - gamescript1.py
             - gamescript2.nut
+            - playerspawn.EXT # exec'd every time the player spawns in the world
+         - webui:
+            - main_menu.ts # i'd like to use TS instead..
          - datascript.ds
       - models:
-         - model0.mdl # valve declaration
+         - model0.mdl # valve model metadata
          - model0.vtx # valve texture references
          - model0.vvd # valve meshes
-         - model1.obj # mesh + texture references + declaration
+         - model1.obj # mesh + texture references + metadatas
       - materials:
-         - material0.vmt # valve metadata
+         - material0.vmt # valve material metadata
          - material0.vtf # valve texture
-         - material1.ml # texture + metadata
+         - material1.mt # material metadata
+         - material1.tf | tga | webp # material texture
       - sounds:
          - sound0.wav
          - sound1.ogg
       - media:
-         - video.webm
+        - webui:
+            main_menu.xml
+        - video.webm
+   - mod0name: # its a mod root folder
+    - scripts:
+        - webui:
+            - main_menu.ts # overwrites the game one, if the engine is started with -game mod0name (id: mod0name:scripts/webui/main_menu.ts )
    - game.exe

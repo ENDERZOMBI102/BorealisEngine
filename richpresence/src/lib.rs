@@ -3,7 +3,6 @@
 extern crate discord_rpc_client;
 
 use std::{env, thread, time};
-use std::ops::Deref;
 use discord_rpc_client::Client;
 use std::str::FromStr;
 
@@ -59,7 +58,7 @@ impl RichPresence {
 
 	pub fn tick(&mut self) {
 		match self.drpc {
-			Some( ref mut drpc ) => {
+			Some( ref mut _drpc ) => {
 
 			}
 			None => {

@@ -1,5 +1,7 @@
 use winit::event::WindowEvent;
 use winit::window::Window;
+use wgpu::util::DeviceExt;
+use crate::buffer::{Vertex, VERTICES};
 
 pub(crate) struct State {
 	instance: wgpu::Instance,
@@ -9,6 +11,8 @@ pub(crate) struct State {
 	queue: wgpu::Queue,
 	config: wgpu::SurfaceConfiguration,
 	render_pipeline: wgpu::RenderPipeline,
+	vertex_buffer: wgpu::Buffer,
+	num_vertices: u32,
 	pub(crate) green: f64, pub(crate) blue: f64,
 	pub(crate) size: winit::dpi::PhysicalSize<u32>
 }
@@ -26,6 +30,7 @@ impl State {
 			&wgpu::RequestAdapterOptions {
 				power_preference: wgpu::PowerPreference::default(),
 				compatible_surface: Some(&surface),
+				force_fallback_adapter: false,
 			},
 		).await.unwrap();
 		let (device, queue) = adapter.request_device(
@@ -63,7 +68,9 @@ impl State {
 			vertex: wgpu::VertexState {
 				module: &shader,
 				entry_point: "main", // 1.
-				buffers: &[], // 2.
+				buffers: &[
+					Vertex::desc(),
+				], // 2.
 			},
 			fragment: Some(wgpu::FragmentState { // 3.
 				module: &shader,
@@ -93,6 +100,15 @@ impl State {
 				alpha_to_coverage_enabled: false, // 4.
 			},
 		});
+		let vertex_buffer = device.create_buffer_init(
+			&wgpu::util::BufferInitDescriptor {
+				label: Some("Vertex Buffer"),
+				contents: bytemuck::cast_slice(VERTICES),
+				usage: wgpu::BufferUsages::VERTEX,
+			}
+		);
+
+		let num_vertices = VERTICES.len() as u32;
 
 		return Self {
 			instance,
@@ -101,10 +117,12 @@ impl State {
 			device,
 			queue,
 			config,
+			render_pipeline,
+			vertex_buffer,
+			num_vertices,
 			size,
 			green: 0.0f64,
-			blue: 0.0f64,
-			render_pipeline,
+			blue: 0.0f64
 		}
 	}
 
@@ -126,7 +144,7 @@ impl State {
 	}
 
 	pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
-		let output = self.surface.get_current_frame()?.output;
+		let output = self.surface.get_current_texture()?;
 		let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
 		let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
 			label: Some("Render Encoder"),
@@ -140,7 +158,7 @@ impl State {
 					resolve_target: None,
 					ops: wgpu::Operations {
 						load: wgpu::LoadOp::Clear(wgpu::Color {
-							r: 1.0,
+							r: 0.1,
 							g: self.green,
 							b: self.blue,
 							a: 1.0,
@@ -152,12 +170,14 @@ impl State {
 			});
 
 			render_pass.set_pipeline(&self.render_pipeline); // 2.
-			render_pass.draw(0..3, 0..1); // 3.
-		}
 
+			render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+			render_pass.draw(0..self.num_vertices, 0..1);
+		}
 
 		// submit will accept anything that implements IntoIter
 		self.queue.submit(std::iter::once(encoder.finish()));
+		output.present();
 
 		Ok(())
 	}
