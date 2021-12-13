@@ -13,7 +13,7 @@ pub(crate) struct State {
 	render_pipeline: wgpu::RenderPipeline,
 	vertex_buffer: wgpu::Buffer,
 	num_vertices: u32,
-	pub(crate) green: f64, pub(crate) blue: f64,
+	pub(crate) red: f64, pub(crate) green: f64, pub(crate) blue: f64,
 	pub(crate) size: winit::dpi::PhysicalSize<u32>
 }
 
@@ -121,6 +121,7 @@ impl State {
 			vertex_buffer,
 			num_vertices,
 			size,
+			red: 0.0f64,
 			green: 0.0f64,
 			blue: 0.0f64
 		}
@@ -158,7 +159,7 @@ impl State {
 					resolve_target: None,
 					ops: wgpu::Operations {
 						load: wgpu::LoadOp::Clear(wgpu::Color {
-							r: 0.1,
+							r: self.red,
 							g: self.green,
 							b: self.blue,
 							a: 1.0,
