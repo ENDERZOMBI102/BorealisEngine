@@ -2,13 +2,11 @@
 name = 'ungine'
 version = '0.1.0'
 authors = ['ENDERZOMBI102']
-edition = '2018'
+edition = '2021'
 description = 'A source-inspired game engine'
 repository = 'https://github.com/ENDERZOMBI102/Ungine.rs'
 license = 'MIT'
 
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace]
 resolver='2'
@@ -23,4 +21,4 @@ renderer = { path = 'renderer' }
 richpresence = { path = 'richpresence' }
 engine_utils = { path = 'engine_utils' }
 engine = { path = 'engine' }
-rand = "0.8.4"
+rand = '0.8.4'
