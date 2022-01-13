@@ -6,6 +6,7 @@ Game:
       - python.dll  # dll containing the python uscript bindings + runtime
       - fmod.dll  # dll containing the fmod audio engine
       - engine.dll  # main engine dll
+      - engine_utils.dll  # utilities for the engine dll
       - ultralight.dll  # contains the ultralight library
       - uscript.dll  # dll containing the uscript runtime + binding detector
       - filesystem.dll  # dll containing the fs wrapper
@@ -24,8 +25,8 @@ Game:
           - config.cfg  # contains console commands to setup options
           - video.cfg  # video options
           - mapload.cfg  # exec'd every map first load
-      - save: # contains quicksaves and full-saves
-          - mapname_saveid.save  # contains a serialized game state, mapname is the map the save was made on
+      - save: # contains quick-saves and full-saves
+          - mapname_saveid.save  # contains a serialized game state, map-name is the map the save was made on
       - maps: # contains the game's maps
           - mapname.EXT  # ( map? bsp? umap? emap? no ext? )
       - screenshots: # contain screenshots
@@ -38,7 +39,7 @@ Game:
               - playerspawn.EXT  # exec'd every time the player spawns in the world
           - webui:  # scripts available to run in the UI framework
               - main_menu.ts  # typescript script
-          - datascript.ds  # datascript, no idea what the original idea was
+          - datascript.ds  # data-script, no idea what the original idea was
       - models:
           - model0.mdl  # valve model metadata
           - model0.vtx  # valve texture references
@@ -56,7 +57,7 @@ Game:
           - webui:  # ui framework folder
               main_menu.xml  # contains the main menu in a html-like format
           - background.webm  # a video that is displayed in the main menu background
-  # its a mod root folder, everything placed in here will override files in a game, while also providing new ones
+  # it's a mod root folder, everything placed in here will override files in a game, while also providing new ones
   # this will be used only if the game executable is exec'd with the parameter -game mod0name
   - mod0name:
       - scripts:
