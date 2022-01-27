@@ -1,4 +1,3 @@
-use std::arch::asm;
 // use renderer;
 // use filesystem;
 
@@ -7,7 +6,8 @@ use std::arch::asm;
 */
 fn main() {
 	// filesystem::filesystem::main();
-	renderer::renderer::main();
+	// renderer::renderer::main();
 	// engine_utils::commandline::main();
+	richpresence::main();
 }
 

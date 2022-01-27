@@ -8,3 +8,4 @@ crate_type = [ 'rlib', 'dylib' ]
 
 [dependencies]
 discord-rpc-client = '0.3.0'
+tier0 = { path = '../tier0' }

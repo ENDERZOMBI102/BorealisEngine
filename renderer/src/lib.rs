@@ -15,7 +15,7 @@ pub mod renderer {
 		env_logger::init();
 		let event_loop = EventLoop::new();
 		let window = WindowBuilder::new().build(&event_loop).unwrap();
-		let mut last_mouse_pos = winit::dpi::PhysicalPosition { x: 0f64, y: 0f64 };
+		let last_mouse_pos = winit::dpi::PhysicalPosition { x: 0f64, y: 0f64 };
 
 		// State::new uses async code, so we're going to wait for it to finish
 		let mut state = pollster::block_on(State::new(&window));

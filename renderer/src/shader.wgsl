@@ -11,18 +11,16 @@ struct VertexOutput {
 };
 
 [[stage(vertex)]]
-fn main(
-    model: VertexInput,
-) -> VertexOutput {
+fn main( model: VertexInput ) -> VertexOutput {
     var out: VertexOutput;
     out.color = model.color;
-    out.clip_position = vec4<f32>(model.position, 1.0);
+    out.clip_position = vec4<f32>( model.position, 1.0 );
     return out;
 }
 
 // Fragment shader
 
 [[stage(fragment)]]
-fn main(in: VertexOutput) -> [[location(0)]] vec4<f32> {
-    return vec4<f32>(in.color, 1.0);
+fn main( in: VertexOutput ) -> [[location(0)]] vec4<f32> {
+    return vec4<f32>( in.color, 1.0 );
 }
