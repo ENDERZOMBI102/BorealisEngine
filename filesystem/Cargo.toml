@@ -8,3 +8,6 @@ description = 'FileSystem utilities'
 crate_type = [ 'rlib', 'dylib' ]
 
 [dependencies]
+serde = '1.0.133'
+savefile = '0.10.1'
+byteorder = '1.4.3'

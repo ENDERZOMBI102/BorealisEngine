@@ -1,0 +1,18 @@
+# Legend:
+#  $TYPE of $VAR = $TYPE of size defined in $VAR
+
+- Ungine PaK Format:
+    - File Header:
+        - signature: 0xUPFEZ
+        - version: u16
+        - origin_size: u16
+        - origin: String of origin_size
+        - entry_count: u64
+    - Entry Header:
+        - size: u128
+        - name_size: u32
+        - name: String of name_size
+        - binary: bool
+        - next_entry_offset: u32
+    - Entry:
+        - data: binary of EntryHeader.size

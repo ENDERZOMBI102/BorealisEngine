@@ -1,13 +1,13 @@
 // use renderer;
-// use filesystem;
+use filesystem::upkf;
 
 /**
 * game executable
 */
 fn main() {
-	// filesystem::filesystem::main();
+	filesystem::upkf::main();
 	// renderer::renderer::main();
 	// engine_utils::commandline::main();
-	richpresence::main();
+	// richpresence::main();
 }
 
