@@ -176,6 +176,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "bytes"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c4872d67bab6358e59559027aa3b9157c53d9358c51423c17554809a8858e0f8"
+
+[[package]]
 name = "calloop"
 version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -559,7 +565,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b176996f649824caad056133be782350e287687a5cae43636215f6b153bac481"
 dependencies = [
  "byteorder",
- "bytes",
+ "bytes 0.4.12",
  "crossbeam-channel 0.3.9",
  "log",
  "named_pipe",
@@ -628,6 +634,7 @@ name = "filesystem"
 version = "0.1.0"
 dependencies = [
  "byteorder",
+ "bytes 1.1.0",
  "savefile",
  "serde",
 ]
