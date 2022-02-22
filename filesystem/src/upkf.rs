@@ -68,8 +68,7 @@ impl FileHeader {
 		}
 	}
 
-	fn save( &self, path: &Path ) -> Result<(), ()> {
-		let mut file = File::create( path ).unwrap();
+	fn save( &self, mut file: &File ) -> Result<(), UpkfError> {
 		file.write_u32::<LittleEndian>( self.signature );
 		file.write_u16::<LittleEndian>( self.version );
 		file.write_u16::<LittleEndian>(self.origin_size );
@@ -115,7 +114,41 @@ struct EntryHeader {
 }
 
 impl EntryHeader {
-	
+	fn save( &self, mut file: &File ) -> Result<(), UpkfError> {
+		file.write_u64::<LittleEndian>( self.size );
+		file.write_u32::<LittleEndian>( self.name_size );
+		file.write(self.name.as_bytes() );
+		file.write_u8(self.binary as u8 );
+		file.write_u32::<LittleEndian>(self.next_entry_offset );
+		file.write_u32::<LittleEndian>(self.metadata_size );
+		file.write(self.metadata.as_bytes() );
+		Ok(())
+	}
+
+	fn load(mut file: &File ) -> Result<Self, UpkfError> {
+		let size = file.read_u64::<LittleEndian>().unwrap();
+		let name_size = file.read_u32::<LittleEndian>().unwrap();
+		let mut name_buf = vec![1 as u8; name_size as usize ];
+		file.read_exact( &mut name_buf);
+		let name = String::from_utf8(name_buf).unwrap();
+		let binary = file.read_u8().unwrap() != 0;
+		let next_entry_offset = file.read_u32::<LittleEndian>().unwrap();
+		let metadata_size = file.read_u32::<LittleEndian>().unwrap();
+		let mut metadata_buf = vec![1 as u8; metadata_size as usize ];
+		file.read_exact( &mut metadata_buf);
+		let metadata = String::from_utf8(metadata_buf).unwrap();
+		return Ok(
+			EntryHeader {
+				size: signature,
+				name_size: name_size,
+				name: name,
+				binary: binary,
+				next_entry_offset: next_entry_offset,
+				metadata_size: metadata_size,
+				metadata: metadata
+			}
+		)
+	}
 }
 
 struct Entry {
@@ -123,7 +156,20 @@ struct Entry {
 }
 
 impl Entry {
-	
+	fn save( &self, mut file: &File ) -> Result<(), UpkfError> {
+		file.write( self.data.as_bytes() );
+		Ok(())
+	}
+
+	fn load( mut file: &File, header: EntryHeader ) -> Result<Self, UpkfError> {
+		let mut buf = vec![1 as u8; header.size as usize ];
+		file.read_exact( &mut buf );
+		return Ok(
+			Entry {
+				data: Bytes::from_static( &buf )
+			}
+		)
+	}
 }
 
 pub fn main() {
