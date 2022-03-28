@@ -3,6 +3,7 @@ use std::fs::File;
 use std::io::Read;
 use std::path::Path;
 use std::process::exit;
+use bytes::Bytes;
 use crate::upkf::Upkf;
 
 pub fn main() {
@@ -21,6 +22,13 @@ pub fn main() {
 		if file.metadata().unwrap().is_dir() {
 			continue
 		}
-		upkf.add_file( file.path().to_str().unwrap().to_string(), File::open( file ).unwrap().bytes().collect() )
+		println!( "Adding {}", file.path().to_str().unwrap() );
+		let mut buf = vec![];
+		File::open( file.path() ).unwrap().read( buf.as_mut_slice() );
+		upkf.add_file(
+			file.path().to_str().unwrap().to_string(),
+			Bytes::from( buf )
+		);
 	}
+	println!("Done")
 }

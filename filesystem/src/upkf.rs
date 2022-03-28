@@ -4,12 +4,13 @@ use std::fs;
 use std::fs::File;
 use std::io::{ErrorKind, Read, Write};
 use std::fmt::{Debug, Display};
+use std::ops::Deref;
 use std::path::Path;
 use byteorder::{ByteOrder, LittleEndian, ReadBytesExt, WriteBytesExt};
 use bytes::{Bytes};
 
 #[derive(Debug)]
-enum UpkfError {
+pub enum UpkfError {
 	NotAnUpkFileError,
 	CorruptedDataError,
 	VersionNotSupportedError,
@@ -31,7 +32,7 @@ impl Upkf {
 			path: path,
 			meta: String::new(),
 			binary: false,
-			bytes: Bytes::from_static( data.as_bytes() )
+			bytes: Bytes::from( data )
 		} );
 		self
 	}
@@ -48,9 +49,7 @@ impl Upkf {
 		} );
 		self
 	}
-}
 
-impl Upkf {
 	pub fn new( origin: String ) -> Self {
 		Self {
 			origin: origin,
@@ -68,12 +67,13 @@ impl Upkf {
 		}
 	}
 
-	pub fn save( path: &Path ) -> Result<(), UpkfError> {
+	pub fn save( &self, path: &Path ) -> Result<(), UpkfError> {
 		let file = File::create( path );
+		Ok(())
 	}
 
 	pub fn get_path( &self ) -> &Path {
-		return Path::new( &self.file )
+		return Path::new( "" )
 	}
 }
 
@@ -198,7 +198,7 @@ struct Entry {
 
 impl Entry {
 	fn save( &self, mut file: &File ) -> Result<(), UpkfError> {
-		file.write( self.data.as_bytes() );
+		file.write( self.data.deref() );
 		Ok(())
 	}
 
@@ -207,7 +207,7 @@ impl Entry {
 		file.read_exact( &mut buf );
 		return Ok(
 			Entry {
-				data: Bytes::from_static( &buf )
+				data: Bytes::from( buf )
 			}
 		)
 	}
