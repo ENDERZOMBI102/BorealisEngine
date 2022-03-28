@@ -1,41 +1,75 @@
+use std::any::Any;
+use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
-use std::io::{Read, Write};
+use std::io::{ErrorKind, Read, Write};
 use std::fmt::{Debug, Display};
 use std::path::Path;
 use byteorder::{ByteOrder, LittleEndian, ReadBytesExt, WriteBytesExt};
 use bytes::{Bytes};
-use savefile::IntrospectorNavCommand::Up;
 
 #[derive(Debug)]
 enum UpkfError {
 	NotAnUpkFileError,
 	CorruptedDataError,
-	VersionNotSupportedError
-}
-
-#[derive(Debug)]
-enum ElementType {
-	TEXT,
-	BYTES
+	VersionNotSupportedError,
+	IoError { err: ErrorKind }
 }
 
 pub struct Upkf {
-	file: String,  // actual fs path
 	origin: String,  // origin of the pak
 	entries: Vec<Element>  // entries
 }
 
 impl Upkf {
+	pub fn add_text_file(
+		&mut self,
+		path: String,
+		data: String
+	) -> &mut Self {
+		self.entries.push( Element {
+			path: path,
+			meta: String::new(),
+			binary: false,
+			bytes: Bytes::from_static( data.as_bytes() )
+		} );
+		self
+	}
+	pub fn add_file(
+		&mut self,
+		path: String,
+		data: Bytes
+	) -> &mut Upkf {
+		self.entries.push( Element {
+			path: path,
+			meta: String::new(),
+			binary: true,
+			bytes: data
+		} );
+		self
+	}
+}
+
+impl Upkf {
+	pub fn new( origin: String ) -> Self {
+		Self {
+			origin: origin,
+			entries: vec![]
+		}
+	}
+
 	pub fn load( path: &Path ) -> Self {
 		let mut file = File::open( path ).unwrap();
 		let header = FileHeader::load( &file ).unwrap();
 		println!("{:?}", header);
 		Self {
-			file: path.to_str().unwrap().to_string(),
 			origin: header.origin,
 			entries: vec![]
 		}
+	}
+
+	pub fn save( path: &Path ) -> Result<(), UpkfError> {
+		let file = File::create( path );
 	}
 
 	pub fn get_path( &self ) -> &Path {
@@ -43,9 +77,16 @@ impl Upkf {
 	}
 }
 
-struct Element {
+#[derive(Debug)]
+pub struct Element {
 	path: String,
+	meta: String,
+	binary: bool,
 	bytes: Bytes
+}
+
+impl Element {
+
 }
 
 #[derive(Debug)]
@@ -139,7 +180,7 @@ impl EntryHeader {
 		let metadata = String::from_utf8(metadata_buf).unwrap();
 		return Ok(
 			EntryHeader {
-				size: signature,
+				size: size,
 				name_size: name_size,
 				name: name,
 				binary: binary,
@@ -173,5 +214,7 @@ impl Entry {
 }
 
 pub fn main() {
-	Upkf::load( Path::new("./data.upkf") );
+	let mut upkf = Upkf::new( "UngineTest".to_string() );
+	upkf.save( Path::new("./test.upkf") );
+	Upkf::load( Path::new("./test.upkf") );
 }
