@@ -5,7 +5,7 @@ from pathlib import Path
 clear = lambda: system('clear')
 stack = []
 pos = 0
-vec = Path('filesystem_unc.upkf').read_bytes()
+vec = Path('filesystem.upkf').read_bytes()
 
 
 u8 = 1

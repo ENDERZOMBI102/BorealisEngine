@@ -196,10 +196,6 @@ impl Element {
 		Entry { data: Bytes::copy_from_slice( bytes.buffer() ) }.save( file );
 	}
 
-	pub fn get_path( &self ) -> &String {
-		&self.path
-	}
-
 	fn load( entry_header: EntryHeader, entry: Entry ) -> Self {
 		// decompress bytes
 		let mut bytes = BufWriter::new( vec![] );
@@ -228,6 +224,10 @@ impl Element {
 			compression: entry_header.compression_type,
 			bytes: Bytes::copy_from_slice( bytes.buffer() )
 		}
+	}
+
+	pub fn get_path( &self ) -> &String {
+		&self.path
 	}
 
 	pub fn get_meta( &self ) -> &String {
