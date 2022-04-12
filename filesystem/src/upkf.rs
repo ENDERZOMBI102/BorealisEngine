@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Cursor, ErrorKind, Read, Write};
 use std::fmt::{Debug, Display, Formatter};
@@ -165,7 +166,7 @@ pub struct Element {
 impl Element {
 	fn write( &self, file: &mut File ) {
 		// compress bytes
-		let mut bytes = BufWriter::new( vec![] );
+		let mut bytes = Cursor::new( vec![] );
 		match self.compression {
 			CompressionType::NONE => {
 				bytes.write( &self.bytes.to_vec() );
@@ -185,7 +186,7 @@ impl Element {
 		}
 		// create and save header and entry
 		EntryHeader {
-			size: bytes.capacity() as u64,
+			size: bytes.get_ref().len() as u64,
 			name_size: self.path.as_bytes().len() as u32,
 			name: self.path.clone(),
 			binary: self.binary,
@@ -193,15 +194,15 @@ impl Element {
 			metadata_size: self.meta.as_bytes().len() as u32,
 			metadata: self.meta.clone()
 		}.save( file );
-		Entry { data: Bytes::copy_from_slice( bytes.buffer() ) }.save( file );
+		Entry { data: Bytes::copy_from_slice( &bytes.get_mut().as_mut_slice() ) }.save( file );
 	}
 
 	fn load( entry_header: EntryHeader, entry: Entry ) -> Self {
 		// decompress bytes
-		let mut bytes = BufWriter::new( vec![] );
+		let mut bytes = Cursor::new( vec![] );
 		match entry_header.compression_type {
 			CompressionType::NONE => {
-				bytes.write( &entry.data.to_vec() );
+				bytes = Cursor::new( entry.data.to_vec() );
 			}
 			CompressionType::LZMA => {
 				lzma_decompress( &mut entry.data.reader(), &mut bytes );
@@ -222,7 +223,7 @@ impl Element {
 			meta: entry_header.metadata,
 			binary: entry_header.binary,
 			compression: entry_header.compression_type,
-			bytes: Bytes::copy_from_slice( bytes.buffer() )
+			bytes: Bytes::copy_from_slice( bytes.get_ref().as_slice() )
 		}
 	}
 
