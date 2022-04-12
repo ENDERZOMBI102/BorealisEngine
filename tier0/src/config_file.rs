@@ -1,4 +1,3 @@
-use std::ascii::escape_default;
 use std::env::VarError;
 use std::fs::File;
 use std::io::Read;

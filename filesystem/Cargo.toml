@@ -1,14 +1,16 @@
 [package]
-name = 'filesystem'
-version = '0.1.0'
-edition = '2021'
-description = 'FileSystem utilities'
+    name = 'filesystem'
+    version = '0.1.0'
+    edition = '2021'
+    description = 'FileSystem utilities'
 
 [lib]
-crate_type = [ 'rlib', 'dylib' ]
+    crate_type = [ 'rlib', 'dylib' ]
 
 [dependencies]
-serde = '1.0.133'
-savefile = '0.10.1'
-byteorder = '1.4.3'
-bytes = '1.1.0'
+    serde = '1.0.133'
+    savefile = '0.10.1'
+    byteorder = '1.4.3'
+    bytes = '1.1.0'
+    walkdir = '2.3.2'
+    lzma-rs = '0.2.0'

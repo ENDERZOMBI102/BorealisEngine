@@ -1,5 +1,5 @@
 // use renderer;
-use filesystem::upkf;
+use filesystem;
 
 /**
 * game executable
@@ -7,6 +7,7 @@ use filesystem::upkf;
 fn main() {
 	// filesystem::upkf::main();
 	filesystem::compressor::main();
+	filesystem::decompressor::main();
 	// renderer::renderer::main();
 	// engine_utils::commandline::main();
 	// richpresence::main();
