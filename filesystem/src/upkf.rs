@@ -22,8 +22,7 @@ pub enum CompressionType {
 	NONE,
 	LZMA,
 	LZMA2,
-	GZIP,
-	BZIP2
+	GZIP
 }
 
 impl CompressionType {
@@ -32,8 +31,7 @@ impl CompressionType {
 			CompressionType::NONE => "NONE",
 			CompressionType::LZMA => "LZMA",
 			CompressionType::LZMA2 => "LZMA2",
-			CompressionType::GZIP => "GZIP",
-			CompressionType::BZIP2 => "BZIP2"
+			CompressionType::GZIP => "GZIP"
 		}
 	}
 }
@@ -44,8 +42,7 @@ impl Display for &CompressionType {
 			CompressionType::NONE => write!( f, "NONE" ),
 			CompressionType::LZMA => write!( f, "LZMA" ),
 			CompressionType::LZMA2 => write!( f, "LZMA2" ),
-			CompressionType::GZIP => write!( f, "GZIP" ),
-			CompressionType::BZIP2 => write!( f, "BZIP2" )
+			CompressionType::GZIP => write!( f, "GZIP" )
 		};
 		Ok(())
 	}
@@ -60,7 +57,6 @@ impl TryFrom<u8> for CompressionType {
 			x if x == CompressionType::LZMA as u8 => Ok( CompressionType::LZMA ),
 			x if x == CompressionType::LZMA2 as u8 => Ok( CompressionType::LZMA2 ),
 			x if x == CompressionType::GZIP as u8 => Ok( CompressionType::GZIP ),
-			x if x == CompressionType::BZIP2 as u8 => Ok( CompressionType::BZIP2 ),
 			_ => Err(()),
 		}
 	}
@@ -75,7 +71,6 @@ impl TryFrom<&str> for CompressionType {
 			x if x == "LZMA" => Ok( CompressionType::LZMA ),
 			x if x == "LZMA2" => Ok( CompressionType::LZMA2 ),
 			x if x == "GZIP" => Ok( CompressionType::GZIP ),
-			x if x == "BZIP2" => Ok( CompressionType::BZIP2 ),
 			_ => Err(()),
 		}
 	}
@@ -210,11 +205,6 @@ impl Element {
 				let mut encoder = libflate::gzip::Encoder::new( &mut bytes ).unwrap();
 				encoder.write_all( &mut self.bytes.clone().to_vec() );
 			}
-			CompressionType::BZIP2 => {
-				let mut encoder = bzip2::Compress::new( bzip2::Compression::best(), 30 );
-				let err = encoder.compress( &mut self.bytes.clone().to_vec(), bytes.get_mut(), bzip2::Action::Run );
-				println!( "{:?}, {}, {}", err, encoder.total_in(), encoder.total_out() );
-			}
 		}
 		// calculate sha256
 		let sha = sha256::digest_bytes( bytes.get_ref() );
@@ -259,11 +249,6 @@ impl Element {
 			CompressionType::GZIP => {
 				let mut decoder = libflate::gzip::Decoder::new( Cursor::new( entry.data.clone() ) ).unwrap();
 				decoder.read( bytes.get_mut() );
-			}
-			CompressionType::BZIP2 => {
-				let mut decoder = bzip2::Decompress::new(false);
-				let err= decoder.decompress( &mut entry.data.clone().to_vec(), &mut bytes.get_mut() );
-				println!( "{:?}", err );
 			}
 		}
 		// create element
@@ -503,7 +488,7 @@ impl UpkfMeta {
 			} else if unwrapped["compression"].is_string() {
 				result.compression = CompressionType::try_from( unwrapped["compression"].as_str().unwrap() ).unwrap_or( default_compression );
 			} else if !unwrapped["compression"].is_null() {
-				eprintln!("\t\t- Invalid value for key \"compression\": expected one of LZMA, LZMA2, GZIP, BZIP2, 0, 1, 2, 3 got {}", unwrapped["compression"].dump() );
+				eprintln!("\t\t- Invalid value for key \"compression\": expected one of NONE, LZMA, LZMA2, GZIP, 0, 1, 2, 3 got {}", unwrapped["compression"].dump() );
 			}
 			// binary
 			if unwrapped["binary"].is_boolean() {

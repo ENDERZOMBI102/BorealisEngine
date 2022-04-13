@@ -6,7 +6,7 @@ use std::path::Path;
 use std::process::exit;
 use bytes::Bytes;
 use crate::upkf::{CompressionType, Upkf, UpkfMeta};
-use crate::upkf::CompressionType::{NONE, LZMA, GZIP, BZIP2, LZMA2};
+use crate::upkf::CompressionType::{NONE, LZMA, GZIP, LZMA2};
 
 pub fn main() {
 	let argv: Vec<String> = env::args().collect();
@@ -20,8 +20,6 @@ pub fn main() {
 		compression = LZMA2;
 	} else if argv.contains( &"--gzip".to_string() ) {
 		compression = GZIP;
-	} else if argv.contains( &"--bzip2".to_string() ) {
-		compression = BZIP2;
 	} else {
 		compression = NONE;
 	}
