@@ -3,3 +3,5 @@ lazy.py
 run
 .idea
 .cargo
+*.upkf
+*.upkfmeta
