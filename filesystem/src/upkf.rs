@@ -1,14 +1,12 @@
-use std::borrow::Borrow;
+use std::collections::HashMap;
 use std::fs::File;
-use std::io::{BufRead, BufReader, BufWriter, Cursor, ErrorKind, Read, Write};
+use std::io::{Cursor, ErrorKind, Read, Write};
 use std::fmt::{Debug, Display, Formatter};
-use std::ops::{Add, Deref};
+use std::ops::Deref;
 use std::path::Path;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use bytes::{Buf, Bytes};
-use bytes::buf::Writer;
 use lzma_rs::{lzma2_compress, lzma2_decompress, lzma_compress, lzma_decompress};
-use serde::__private::de::Content::ByteBuf;
 
 #[derive(Debug)]
 pub enum UpkfError {
@@ -25,6 +23,18 @@ pub enum CompressionType {
 	LZMA2,
 	GZIP,
 	BZIP2
+}
+
+impl CompressionType {
+	pub fn name( &self ) -> &'static str {
+		match self {
+			CompressionType::NONE => "NONE",
+			CompressionType::LZMA => "LZMA",
+			CompressionType::LZMA2 => "LZMA2",
+			CompressionType::GZIP => "GZIP",
+			CompressionType::BZIP2 => "BZIP2"
+		}
+	}
 }
 
 impl Display for &CompressionType {
@@ -50,6 +60,21 @@ impl TryFrom<u8> for CompressionType {
 			x if x == CompressionType::LZMA2 as u8 => Ok( CompressionType::LZMA2 ),
 			x if x == CompressionType::GZIP as u8 => Ok( CompressionType::GZIP ),
 			x if x == CompressionType::BZIP2 as u8 => Ok( CompressionType::BZIP2 ),
+			_ => Err(()),
+		}
+	}
+}
+
+impl TryFrom<&str> for CompressionType {
+	type Error = ();
+
+	fn try_from(value: &str) -> Result<Self, Self::Error> {
+		match value {
+			x if x == CompressionType::NONE.name() => Ok( CompressionType::NONE ),
+			x if x == CompressionType::LZMA.name() => Ok( CompressionType::LZMA ),
+			x if x == CompressionType::LZMA2.name() => Ok( CompressionType::LZMA2 ),
+			x if x == CompressionType::GZIP.name() => Ok( CompressionType::GZIP ),
+			x if x == CompressionType::BZIP2.name() => Ok( CompressionType::BZIP2 ),
 			_ => Err(()),
 		}
 	}
@@ -371,6 +396,76 @@ impl Entry {
 				data: Bytes::from( buf )
 			}
 		)
+	}
+}
+
+pub struct UpkfMeta {
+	compression: CompressionType,
+	string_meta: String,
+	binary: bool
+}
+
+impl UpkfMeta {
+	pub fn default( compression: CompressionType ) -> UpkfMeta {
+		UpkfMeta {
+			compression: compression,
+			string_meta: String::new(),
+			binary: true
+		}
+	}
+
+	pub fn get_string_meta( &self ) -> String {
+		self.string_meta.clone()
+	}
+
+	pub fn is_binary( &self ) -> bool {
+		self.binary
+	}
+
+	pub fn get_compression( &self ) -> CompressionType {
+		self.compression
+	}
+
+	pub fn serialize( &self, file: &mut File ) {
+		let mut map: HashMap<&str, &str> = HashMap::new();
+		map.insert( "compression", self.compression.name() );
+		map.insert( "metadata", &self.string_meta );
+		let binary = self.binary.to_string();
+		map.insert( "binary", &binary );
+
+		file.write_all( json::stringify_pretty( map, 4 ).as_bytes() );
+	}
+
+	pub fn deserialize( file: &mut File, default_compression: CompressionType ) -> Result<UpkfMeta, ()> {
+		let mut src = String::new();
+		file.read_to_string( &mut src );
+		let value = json::parse(src.as_str() );
+		let mut result = UpkfMeta::default( default_compression );
+		if value.is_ok() {
+			let unwrapped = value.unwrap();
+			// compression
+			if unwrapped["compression"].is_number() {
+				result.compression = CompressionType::try_from( unwrapped["compression"].as_u8().unwrap() ).unwrap_or( default_compression );
+			} else if unwrapped["compression"].is_string() {
+				result.compression = CompressionType::try_from( unwrapped["compression"].as_str().unwrap() ).unwrap_or( default_compression );
+			} else if !unwrapped["compression"].is_null() {
+				eprintln!("\t\t- Invalid value for key \"compression\": expected one of LZMA, LZMA2, GZIP, BZIP2, 0, 1, 2, 3 got {}", unwrapped["compression"].dump() );
+			}
+			// binary
+			if unwrapped["binary"].is_boolean() {
+				result.binary = unwrapped["binary"].as_bool().unwrap_or( result.binary );
+			} else if !unwrapped["binary"].is_null() {
+				eprintln!("\t\t- Invalid value for key \"binary\": expected one of true, false got {}", unwrapped["binary"].dump() )
+			}
+			// metadata
+			if unwrapped["metadata"].is_object() {
+				result.string_meta = unwrapped["metadata"].dump();
+			} else if !unwrapped["metadata"].is_null() {
+				eprintln!("\t\t- Invalid type for key \"metadata\": expected object got {}", unwrapped["metadata"] )
+			}
+			return Result::Ok( result );
+		}
+		Result::Err(())
 	}
 }
 

@@ -8,9 +8,11 @@
     crate_type = [ 'rlib', 'dylib' ]
 
 [dependencies]
-    serde = '1.0.133'
+    json = '0.12.4'
     savefile = '0.10.1'
     byteorder = '1.4.3'
     bytes = '1.1.0'
     walkdir = '2.3.2'
     lzma-rs = '0.2.0'
+    libflate = '1.2.0'
+    bzip2 = '0.4.3'
