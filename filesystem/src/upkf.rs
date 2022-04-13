@@ -507,9 +507,3 @@ impl UpkfMeta {
 		Result::Err(())
 	}
 }
-
-pub fn main() {
-	let upkf = Upkf::new( "UngineTest".to_string() );
-	upkf.save( Path::new("./test.upkf") );
-	Upkf::load( Path::new("./test.upkf"), false );
-}

@@ -1,24 +1,22 @@
 [package]
-name = 'ungine'
-version = '0.1.0'
-authors = ['ENDERZOMBI102']
-edition = '2021'
-description = 'A source-inspired game engine'
-repository = 'https://github.com/ENDERZOMBI102/Ungine.rs'
-license = 'MIT'
-
+    name = 'ungine'
+    version = '0.1.0'
+    authors = ['ENDERZOMBI102']
+    edition = '2021'
+    description = 'A source-inspired game engine'
+    repository = 'https://github.com/ENDERZOMBI102/Ungine.rs'
+    license = 'MIT'
 
 [workspace]
-resolver='2'
-members = [
-	'.', 'filesystem', 'renderer', 'richpresence', 'tier0', 'engine'
-]
-
+    resolver='2'
+    members = [
+        '.', 'filesystem', 'renderer', 'richpresence', 'tier0', 'engine'
+    ]
 
 [dependencies]
-filesystem = { path = 'filesystem' }
-renderer = { path = 'renderer' }
-richpresence = { path = 'richpresence' }
-tier0 = { path = 'tier0' }
-engine = { path = 'engine' }
-rand = '0.8.4'
+    filesystem = { path = 'filesystem' }
+    renderer = { path = 'renderer' }
+    richpresence = { path = 'richpresence' }
+    tier0 = { path = 'tier0' }
+    engine = { path = 'engine' }
+    rand = '0.8.4'
