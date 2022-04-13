@@ -32,13 +32,13 @@ pub fn main() {
 			crc32d = crc32.unwrap().to_string();
 			sha256d = sha256.clone().unwrap();
 		}
-		println!( " - file: {}", entry.get_path() );
-		println!( "   - meta: {}", meta );
-		println!( "   - size: {}", entry.get_content().len() );
-		println!( "   - crc32: {}", crc32d );
-		println!( "   - sha256: {}", sha256d );
-		println!( "   - binary: {}", entry.is_bynary() );
-		println!( "   - compression: {}", entry.get_compression() );
+		println!( " - File Path: {}", entry.get_path() );
+		println!( "   - Meta: {}", meta );
+		println!( "   - Size: {}", entry.get_content().len() );
+		println!( "   - Crc32: {}", crc32d );
+		println!( "   - Sha256: {}", sha256d );
+		println!( "   - Binary: {}", entry.is_bynary() );
+		println!( "   - Compression: {}", entry.get_compression() );
 	}
 	println!( "\nFinished" )
 }
