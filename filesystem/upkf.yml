@@ -1,10 +1,18 @@
 # Legend:
 #  $TYPE of $VAR = $TYPE of size defined in $VAR
+#  $TYPE ( $VALUE ) = $TYPE storing the value $VALUE
+#  "?" = $TYPE was not yet decided
 
-- Ungine PaK Format:
+- Ungine PaK Format version 0:
+    - CompressionType:
+        - NONE: 0
+        - LZMA: 1
+        - LZMA2: 2
+        - GZIP: 3
+        - BZIP2: 4
     - File Header:
-        - signature: 0x464b5055
-        - version: u16
+        - signature: u32 ( 0x464b5055 )
+        - version: u8 ( 0 )
         - origin_size: u16
         - origin: String of origin_size
         - entry_count: u64
@@ -13,7 +21,9 @@
         - name_size: u32
         - name: String of name_size
         - binary: bool
-        - next_entry_offset: u32
+        - compression_type: CompressionType
+        - crc: "?"
+        - sha256: "?"
         - metadata_size: u32
         - metadata: String of metadata_size
     - Entry:
