@@ -11,6 +11,7 @@ use crate::upkf::CompressionType::{NONE, LZMA, GZIP, BZIP2, LZMA2};
 pub fn main() {
 	let argv: Vec<String> = env::args().collect();
 	let dir_to_compress = Path::new( argv.get(1).unwrap() );
+	let no_data_text: String = String::from("{}");
 
 	let compression: CompressionType;
 	if argv.contains( &"--lzma".to_string() ) {
@@ -53,9 +54,13 @@ pub fn main() {
 				eprintln!( "\t- Metadata is not valid, ignoring" );
 			} else {
 				let meta2 = meta.unwrap();
+				let mut meta3 = &meta2.get_string_meta();
+				if meta3.is_empty() {
+					meta3 = &no_data_text;
+				}
 				println!( "\t- Metadata is valid" );
 				println!( "\t\t- Compression: {}", &meta2.get_compression().name() );
-				println!( "\t\t- Metadata: {}", &meta2.get_string_meta() );
+				println!( "\t\t- Metadata: {}", meta3 );
 				println!( "\t\t- Binary: {}", &meta2.is_binary() );
 				end_meta = Some( meta2 );
 			}

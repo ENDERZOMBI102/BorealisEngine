@@ -11,20 +11,22 @@
         - GZIP: 3
         - BZIP2: 4
     - File Header:
-        - signature: u32 ( 0x464b5055 )
-        - version: u8 ( 0 )
-        - origin_size: u16
-        - origin: String of origin_size
-        - entry_count: u64
+        - signature: u32 ( 0x464b5055 )      # indicates that the file is a UPKF file
+        - version: u8 ( 0 )                  # version of the pak format
+        - recompressed: bool                 # whether all the bytes of the entries where compressed toghether ( LZMA )
+        - origin_size: u16                   # size of the string origin
+        - origin: String of origin_size      # origin of the pak file, usually mod/game name
+        - entry_count: u64                   # how many entries are in this pak file
     - Entry Header:
-        - size: u64
-        - name_size: u32
-        - name: String of name_size
-        - binary: bool
-        - compression_type: CompressionType
-        - crc: "?"
-        - sha256: "?"
-        - metadata_size: u32
-        - metadata: String of metadata_size
+        - size: u64                          # size of the entry
+        - name_size: u32                     # size of the string name
+        - name: String of name_size          # path of the file, to emulate a filesystem
+        - binary: bool                       # whether the file is a text or binary file
+        - compression_type: CompressionType  # what compression was used to compress this entry's data
+        - crc: u32                           # the crc of the data
+        - sha256_size: u16                   # size of the string sha256
+        - sha256: String of sha256_size      # the sha256 of the data
+        - metadata_size: u32                 # size of the json string metadata
+        - metadata: String of metadata_size  # metadata of the file, may be whatever may be useful for the engine
     - Entry:
-        - data: binary of EntryHeader.size
+        - data: binary of EntryHeader.size   # contents of the file in this entry

@@ -6,14 +6,15 @@ use std::ops::Deref;
 use std::path::Path;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use bytes::{Buf, Bytes};
-use lzma_rs::{lzma2_compress, lzma2_decompress, lzma_compress, lzma_decompress};
 
 #[derive(Debug)]
 pub enum UpkfError {
 	NotAnUpkFileError,
 	CorruptedDataError,
 	VersionNotSupportedError,
-	IoError { err: ErrorKind }
+	IoError { err: ErrorKind },
+	Crc32CheckFailed,
+	Sha256CheckFailed,
 }
 
 #[derive(Debug, Copy, Clone, PartialOrd, PartialEq)]
@@ -70,11 +71,11 @@ impl TryFrom<&str> for CompressionType {
 
 	fn try_from(value: &str) -> Result<Self, Self::Error> {
 		match value {
-			x if x == CompressionType::NONE.name() => Ok( CompressionType::NONE ),
-			x if x == CompressionType::LZMA.name() => Ok( CompressionType::LZMA ),
-			x if x == CompressionType::LZMA2.name() => Ok( CompressionType::LZMA2 ),
-			x if x == CompressionType::GZIP.name() => Ok( CompressionType::GZIP ),
-			x if x == CompressionType::BZIP2.name() => Ok( CompressionType::BZIP2 ),
+			x if x == "NONE" => Ok( CompressionType::NONE ),
+			x if x == "LZMA" => Ok( CompressionType::LZMA ),
+			x if x == "LZMA2" => Ok( CompressionType::LZMA2 ),
+			x if x == "GZIP" => Ok( CompressionType::GZIP ),
+			x if x == "BZIP2" => Ok( CompressionType::BZIP2 ),
 			_ => Err(()),
 		}
 	}
@@ -112,7 +113,9 @@ impl Upkf {
 			meta: meta,
 			binary: binary,
 			compression: compression,
-			bytes: data
+			bytes: data,
+			crc32: Option::None,
+			sha256: Option::None
 		} );
 		self
 	}
@@ -124,7 +127,7 @@ impl Upkf {
 		}
 	}
 
-	pub fn load( path: &Path ) -> Self {
+	pub fn load( path: &Path, check_content: bool ) -> Self {
 		let file = File::open( path ).unwrap();
 		let header = FileHeader::load( &file ).unwrap();
 		let mut upkf = Self { origin: header.origin, entries: vec![] };
@@ -132,17 +135,16 @@ impl Upkf {
 		for _index in 0 .. header.entry_count {
 			let entry_header = EntryHeader::load( &file ).unwrap();
 			let entry = Entry::load( &file, &entry_header ).unwrap();
-			upkf.entries.push( Element::load( entry_header, entry ) );
+			upkf.entries.push( Element::load( entry_header, entry, check_content ).unwrap() );
 		}
-
 		upkf
 	}
 
 	pub fn save( &self, path: &Path ) -> Result<(), UpkfError> {
 		let mut file = File::create( path ).unwrap();
-		FileHeader::new( self.origin.clone(), self.entries.len() as u64 ).save( &file );
+		FileHeader::new( self.origin.clone(), self.entries.len() as u64, false ).save( &file );
 		for entry in &self.entries {
-			entry.write( &mut file )
+			entry.write( &mut file );
 		}
 		Ok(())
 	}
@@ -185,7 +187,9 @@ pub struct Element {
 	meta: String,
 	binary: bool,
 	compression: CompressionType,
-	bytes: Bytes
+	bytes: Bytes,
+	crc32: Option<u32>,
+	sha256: Option<String>,
 }
 
 impl Element {
@@ -197,18 +201,23 @@ impl Element {
 				bytes.write( &self.bytes.to_vec() );
 			}
 			CompressionType::LZMA => {
-				lzma_compress( &mut self.bytes.clone().reader(), &mut bytes );
+				lzma_rs::lzma_compress( &mut self.bytes.clone().reader(), &mut bytes );
 			}
 			CompressionType::LZMA2 => {
-				lzma2_compress( &mut self.bytes.clone().reader(), &mut bytes );
+				lzma_rs::lzma2_compress( &mut self.bytes.clone().reader(), &mut bytes );
 			}
 			CompressionType::GZIP => {
-				todo!();
+				let mut encoder = libflate::gzip::Encoder::new( &mut bytes ).unwrap();
+				encoder.write_all( &mut self.bytes.clone().to_vec() );
 			}
 			CompressionType::BZIP2 => {
-				todo!();
+				let mut encoder = bzip2::Compress::new( bzip2::Compression::best(), 30 );
+				let err = encoder.compress( &mut self.bytes.clone().to_vec(), bytes.get_mut(), bzip2::Action::Run );
+				println!( "{:?}, {}, {}", err, encoder.total_in(), encoder.total_out() );
 			}
 		}
+		// calculate sha256
+		let sha = sha256::digest_bytes( bytes.get_ref() );
 		// create and save header and entry
 		EntryHeader {
 			size: bytes.get_ref().len() as u64,
@@ -216,13 +225,25 @@ impl Element {
 			name: self.path.clone(),
 			binary: self.binary,
 			compression_type: self.compression,
+			crc: crc32fast::hash( bytes.get_ref() ),
+			sha256_size: sha.as_bytes().len() as u16,
+			sha256: sha,
 			metadata_size: self.meta.as_bytes().len() as u32,
 			metadata: self.meta.clone()
 		}.save( file );
 		Entry { data: Bytes::copy_from_slice( &bytes.get_mut().as_mut_slice() ) }.save( file );
 	}
 
-	fn load( entry_header: EntryHeader, entry: Entry ) -> Self {
+	fn load( entry_header: EntryHeader, entry: Entry, check_content: bool ) -> Result<Self, UpkfError> {
+		if check_content {
+			// check crc and sha256
+			if crc32fast::hash( &entry.data ) != entry_header.crc {
+				return Result::Err( UpkfError::Crc32CheckFailed );
+			}
+			if sha256::digest_bytes( &entry.data ) != entry_header.sha256 {
+				return Result::Err( UpkfError::Sha256CheckFailed );
+			}
+		}
 		// decompress bytes
 		let mut bytes = Cursor::new( vec![] );
 		match entry_header.compression_type {
@@ -230,26 +251,33 @@ impl Element {
 				bytes = Cursor::new( entry.data.to_vec() );
 			}
 			CompressionType::LZMA => {
-				lzma_decompress( &mut entry.data.reader(), &mut bytes );
+				lzma_rs::lzma_decompress( &mut entry.data.reader(), &mut bytes );
 			}
 			CompressionType::LZMA2 => {
-				lzma2_decompress(&mut entry.data.reader(), &mut bytes );
+				lzma_rs::lzma2_decompress(&mut entry.data.reader(), &mut bytes );
 			}
 			CompressionType::GZIP => {
-				todo!();
+				let mut decoder = libflate::gzip::Decoder::new( Cursor::new( entry.data.clone() ) ).unwrap();
+				decoder.read( bytes.get_mut() );
 			}
 			CompressionType::BZIP2 => {
-				todo!();
+				let mut decoder = bzip2::Decompress::new(false);
+				let err= decoder.decompress( &mut entry.data.clone().to_vec(), &mut bytes.get_mut() );
+				println!( "{:?}", err );
 			}
 		}
 		// create element
-		Element {
-			path: entry_header.name,
-			meta: entry_header.metadata,
-			binary: entry_header.binary,
-			compression: entry_header.compression_type,
-			bytes: Bytes::copy_from_slice( bytes.get_ref().as_slice() )
-		}
+		Ok(
+			Element {
+				path: entry_header.name,
+				meta: entry_header.metadata,
+				binary: entry_header.binary,
+				compression: entry_header.compression_type,
+				bytes: Bytes::copy_from_slice( bytes.get_ref().as_slice() ),
+				crc32: Option::Some( entry_header.crc ),
+				sha256: Option::Some( entry_header.sha256 ),
+			}
+		)
 	}
 
 	pub fn get_path( &self ) -> &String {
@@ -275,22 +303,32 @@ impl Element {
 	pub fn get_compression( &self ) -> &CompressionType {
 		&self.compression
 	}
+
+	pub fn get_crc32( &self ) -> &Option<u32> {
+		&self.crc32
+	}
+
+	pub fn get_sha256( &self ) -> &Option<String> {
+		&self.sha256
+	}
 }
 
 #[derive(Debug)]
 struct FileHeader {
 	signature: u32,
 	version: u8,
+	recompressed: bool,
 	origin_size: u16,
 	origin: String,
 	entry_count: u64
 }
 
 impl FileHeader {
-	fn new( origin: String, entry_count: u64 ) -> FileHeader {
+	fn new(origin: String, entry_count: u64, compress_entries: bool ) -> FileHeader {
 		return FileHeader {
 			signature: 0x464b5055,
 			version: 0,
+			recompressed: compress_entries,
 			origin_size: origin.as_bytes().len() as u16,
 			origin: origin,
 			entry_count: entry_count
@@ -300,6 +338,7 @@ impl FileHeader {
 	fn save( &self, mut file: &File ) -> Result<(), UpkfError> {
 		file.write_u32::<LittleEndian>( self.signature );
 		file.write_u8( self.version );
+		file.write_u8( self.recompressed as u8 );
 		file.write_u16::<LittleEndian>( self.origin_size );
 		file.write( self.origin.as_bytes() );
 		file.write_u64::<LittleEndian>( self.entry_count );
@@ -315,6 +354,7 @@ impl FileHeader {
 		if version != 0 {
 			return Result::Err(UpkfError::VersionNotSupportedError)
 		}
+		let recompressed = file.read_u8().unwrap() != 0;
 		let origin_size = file.read_u16::<LittleEndian>().unwrap();
 		let mut buf = vec![ 0 as u8; origin_size as usize ];
 		file.read_exact( &mut buf );
@@ -324,6 +364,7 @@ impl FileHeader {
 			FileHeader {
 				signature: signature,
 				version: version,
+				recompressed: recompressed,
 				origin_size: origin_size,
 				origin: origin,
 				entry_count: entry_count
@@ -338,6 +379,9 @@ struct EntryHeader {
 	name: String,
 	binary: bool,
 	compression_type: CompressionType,
+	crc: u32,
+	sha256_size: u16,
+	sha256: String,
 	metadata_size: u32,
 	metadata: String
 }
@@ -349,18 +393,25 @@ impl EntryHeader {
 		file.write(self.name.as_bytes() );
 		file.write_u8(self.binary as u8 );
 		file.write_u8(self.compression_type as u8 );
+		file.write_u32::<LittleEndian>(self.crc );
+		file.write_u16::<LittleEndian>(self.sha256.as_bytes().len() as u16 );
+		file.write(self.sha256.as_bytes() );
 		file.write_u32::<LittleEndian>(self.metadata_size );
 		file.write(self.metadata.as_bytes() );
 		Ok(())
 	}
 
-	fn load(mut file: &File ) -> Result<Self, UpkfError> {
+	fn load( mut file: &File ) -> Result<Self, UpkfError> {
 		let size = file.read_u64::<LittleEndian>().unwrap();
 		let name_size = file.read_u32::<LittleEndian>().unwrap();
 		let mut name_buf = vec![ 0 as u8; name_size as usize ]; file.read_exact( &mut name_buf );
 		let name = String::from_utf8(name_buf).unwrap();
 		let binary = file.read_u8().unwrap() != 0;
 		let compression_type = CompressionType::try_from( file.read_u8().unwrap() ).unwrap_or(CompressionType::NONE);
+		let crc = file.read_u32::<LittleEndian>().unwrap();
+		let sha256_size = file.read_u16::<LittleEndian>().unwrap();
+		let mut sha256_buf = vec![ 0 as u8; sha256_size as usize ]; file.read_exact( &mut sha256_buf );
+		let sha256 = String::from_utf8( sha256_buf ).unwrap();
 		let metadata_size = file.read_u32::<LittleEndian>().unwrap();
 		let mut metadata_buf = vec![ 0 as u8; metadata_size as usize ]; file.read_exact( &mut metadata_buf);
 		let metadata = String::from_utf8(metadata_buf).unwrap();
@@ -371,8 +422,11 @@ impl EntryHeader {
 				name: name,
 				binary: binary,
 				compression_type: compression_type,
-				metadata: metadata,
+				crc: crc,
+				sha256_size: sha256_size,
+				sha256: sha256,
 				metadata_size: metadata_size,
+				metadata: metadata
 			}
 		)
 	}
@@ -472,5 +526,5 @@ impl UpkfMeta {
 pub fn main() {
 	let upkf = Upkf::new( "UngineTest".to_string() );
 	upkf.save( Path::new("./test.upkf") );
-	Upkf::load( Path::new("./test.upkf") );
+	Upkf::load( Path::new("./test.upkf"), false );
 }
