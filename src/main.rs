@@ -11,4 +11,3 @@ fn main() {
 		name => eprintln!( "Unrecognized executable name: {}", name )
 	}
 }
-
