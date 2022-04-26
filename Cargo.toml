@@ -20,3 +20,4 @@
     tier0 = { path = 'tier0' }
     engine = { path = 'engine' }
     rand = '0.8.4'
+    log = '0.4.16'

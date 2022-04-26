@@ -12,7 +12,6 @@ pub mod renderer {
 	};
 
 	pub fn main() {
-		env_logger::init();
 		let event_loop = EventLoop::new();
 		let window = WindowBuilder::new().build(&event_loop).unwrap();
 		let last_mouse_pos = winit::dpi::PhysicalPosition { x: 0f64, y: 0f64 };

@@ -1,11 +1,12 @@
 [package]
-name = 'richpresence'
-version = '0.1.0'
-edition = '2021'
+    name = 'richpresence'
+    version = '0.1.0'
+    edition = '2021'
 
 [lib]
-crate_type = [ 'rlib', 'dylib' ]
+    crate_type = [ 'rlib', 'dylib' ]
 
 [dependencies]
-discord-rpc-client = '0.3.0'
-tier0 = { path = '../tier0' }
+    discord-rich-presence = '0.2.0'
+    steamworks = '0.9.0'
+    tier0 = { path = '../tier0' }

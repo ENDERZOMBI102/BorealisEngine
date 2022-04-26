@@ -1,13 +1,18 @@
+use log::error;
+
 /**
 * game executable
 */
 fn main() {
+	tier0::console::console();
 	match std::env::var("EXEC").unwrap().as_str() {
 		"compressor" => filesystem::compressor::main(),
 		"decompressor" => filesystem::decompressor::main(),
 		"renderer" => renderer::renderer::main(),
 		"commandline" => tier0::commandline::main(),
-		"richpresence" => richpresence::main(),
-		name => eprintln!( "Unrecognized executable name: {}", name )
+		"discord_rp" => richpresence::discord::main(),
+		"discord_rp2" => richpresence::discord::main2(),
+		"steam_rp" => richpresence::steam::main(),
+		name => error!( "Unrecognized executable name: {}", name )
 	}
 }
