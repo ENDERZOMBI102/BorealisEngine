@@ -6,6 +6,7 @@ mod file;
 pub mod upkf;
 pub mod compressor;
 pub mod decompressor;
+pub mod layered;
 
 pub mod filesystem {
 

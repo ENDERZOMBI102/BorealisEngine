@@ -8,6 +8,7 @@ fn main() {
 	match std::env::var("EXEC").unwrap().as_str() {
 		"compressor" => filesystem::compressor::main(),
 		"decompressor" => filesystem::decompressor::main(),
+		"layered" => filesystem::layered::main(),
 		"renderer" => renderer::renderer::main(),
 		"commandline" => tier0::commandline::main(),
 		"discord_rp" => richpresence::discord::main(),
