@@ -10,7 +10,7 @@
 [workspace]
     resolver='2'
     members = [
-        '.', 'filesystem', 'renderer', 'richpresence', 'tier0', 'engine'
+        '.', 'filesystem', 'renderer', 'richpresence', 'tier0', 'engine', 'tools'
     ]
 
 [dependencies]

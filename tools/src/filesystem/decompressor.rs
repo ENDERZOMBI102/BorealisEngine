@@ -2,7 +2,7 @@ use std::env;
 use std::os::windows::fs::MetadataExt;
 use std::path::Path;
 use std::process::exit;
-use crate::upkf::Upkf;
+use filesystem::upkf::Upkf;
 
 pub fn main() {
 	let argv: Vec<String> = env::args().collect();

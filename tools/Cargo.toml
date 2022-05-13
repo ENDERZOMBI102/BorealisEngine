@@ -1,0 +1,18 @@
+[package]
+    name = 'tools'
+    version = '0.1.0'
+    edition = '2021'
+    description = 'All Ungine tools are store here'
+
+[[bin]]
+    name = 'compressor'
+    path = 'src/filesystem/compressor.rs'
+
+[[bin]]
+    name = 'decompressor'
+    path = 'src/filesystem/decompressor.rs'
+
+[dependencies]
+    filesystem = { path = '../filesystem' }
+    bytes = '1.1.0'
+    walkdir = '2.3.2'

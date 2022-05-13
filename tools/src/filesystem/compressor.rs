@@ -5,8 +5,8 @@ use std::os::windows::fs::MetadataExt;
 use std::path::Path;
 use std::process::exit;
 use bytes::Bytes;
-use crate::upkf::{CompressionType, Upkf, UpkfMeta};
-use crate::upkf::CompressionType::{NONE, LZMA, GZIP, LZMA2};
+use filesystem::upkf::{CompressionType, Upkf, UpkfMeta};
+use filesystem::upkf::CompressionType::{NONE, LZMA, GZIP, LZMA2};
 
 pub fn main() {
 	let argv: Vec<String> = env::args().collect();

@@ -6,8 +6,6 @@ use log::error;
 fn main() {
 	tier0::console::console();
 	match std::env::var("EXEC").unwrap().as_str() {
-		"compressor" => filesystem::compressor::main(),
-		"decompressor" => filesystem::decompressor::main(),
 		"layered" => filesystem::layered::main(),
 		"renderer" => renderer::renderer::main(),
 		"commandline" => tier0::commandline::main(),
