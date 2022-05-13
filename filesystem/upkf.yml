@@ -16,6 +16,7 @@
         - recompressed: bool                 # whether all the bytes of the entries where compressed toghether ( LZMA )
         - origin_size: u16                   # size of the string origin
         - origin: String of origin_size      # origin of the pak file, usually mod/game name
+        - chksum: u128                        # sum of all crc fields, used as final check
         - entry_count: u64                   # how many entries are in this pak file
     - Entry Header:
         - size: u64                          # size of the entry

@@ -124,8 +124,8 @@ impl Upkf {
 	}
 
 	pub fn load( path: &Path, check_content: bool ) -> Self {
-		let file = File::open( path ).unwrap();
-		let header = FileHeader::load( &file ).unwrap();
+		let mut file = File::open( path ).unwrap();
+		let header = FileHeader::load( &mut file ).unwrap();
 		let mut upkf = Self {
 			origin: header.origin,
 			path: Some( path.to_path_buf() ),
@@ -133,19 +133,22 @@ impl Upkf {
 		};
 
 		for _index in 0 .. header.entry_count {
-			let entry_header = EntryHeader::load( &file ).unwrap();
-			let entry = Entry::load( &file, &entry_header ).unwrap();
+			let entry_header = EntryHeader::load( &mut file ).unwrap();
+			let entry = Entry::load( &mut file, &entry_header ).unwrap();
 			upkf.entries.push( Element::load( entry_header, entry, check_content ).unwrap() );
 		}
 		upkf
 	}
 
 	pub fn save( &self, path: &Path ) -> Result<(), UpkfError> {
-		let mut file = File::create( path ).unwrap();
-		FileHeader::new( self.origin.clone(), self.entries.len() as u64, false ).save( &file );
+		let mut data: Cursor< Vec<u8> > = Cursor::new( Vec::new() );
+		let mut chksum = 0 as u128;
 		for entry in &self.entries {
-			entry.write( &mut file );
+			chksum += entry.write( &mut data ) as u128;
 		}
+		let mut file = File::create( path ).unwrap();
+		FileHeader::new( self.origin.clone(), chksum, self.entries.len() as u64, false ).save( &mut file );
+		file.write( data.get_ref().as_slice() );
 		Ok(())
 	}
 
@@ -199,7 +202,7 @@ pub struct Element {
 }
 
 impl Element {
-	fn write( &self, file: &mut File ) {
+	fn write( &self, file: &'a mut dyn Write ) -> u32 {
 		// compress bytes
 		let mut bytes = Cursor::new( vec![] );
 		match self.compression {
@@ -217,8 +220,9 @@ impl Element {
 				encoder.write_all( &mut self.bytes.clone().to_vec() );
 			}
 		}
-		// calculate sha256
+		// calculate sha256 and crc32
 		let sha = sha256::digest_bytes( bytes.get_ref() );
+		let crc32 = crc32fast::hash( bytes.get_ref() );
 		// create and save header and entry
 		EntryHeader {
 			size: bytes.get_ref().len() as u64,
@@ -226,13 +230,14 @@ impl Element {
 			name: self.path.clone(),
 			binary: self.binary,
 			compression_type: self.compression,
-			crc: crc32fast::hash( bytes.get_ref() ),
+			crc: crc32,
 			sha256_size: sha.as_bytes().len() as u16,
 			sha256: sha,
 			metadata_size: self.meta.as_bytes().len() as u32,
 			metadata: self.meta.clone()
 		}.save( file );
 		Entry { data: Bytes::copy_from_slice( &bytes.get_mut().as_mut_slice() ) }.save( file );
+		crc32
 	}
 
 	fn load( entry_header: EntryHeader, entry: Entry, check_content: bool ) -> Result<Self, UpkfError> {
@@ -316,32 +321,35 @@ struct FileHeader {
 	recompressed: bool,
 	origin_size: u16,
 	origin: String,
+	chksum: u128,
 	entry_count: u64
 }
 
 impl FileHeader {
-	fn new(origin: String, entry_count: u64, compress_entries: bool ) -> FileHeader {
+	fn new( origin: String, chksum: u128, entry_count: u64, compress_entries: bool ) -> FileHeader {
 		return FileHeader {
 			signature: 0x464b5055,
 			version: 0,
 			recompressed: compress_entries,
 			origin_size: origin.as_bytes().len() as u16,
 			origin: origin,
+			chksum: chksum,
 			entry_count: entry_count
 		}
 	}
 
-	fn save( &self, mut file: &File ) -> Result<(), UpkfError> {
+	fn save( &self, file: &'a mut dyn Write ) -> Result<(), UpkfError> {
 		file.write_u32::<LittleEndian>( self.signature );
 		file.write_u8( self.version );
 		file.write_u8( self.recompressed as u8 );
 		file.write_u16::<LittleEndian>( self.origin_size );
 		file.write( self.origin.as_bytes() );
+		file.write_u128::<LittleEndian>( self.chksum );
 		file.write_u64::<LittleEndian>( self.entry_count );
 		Ok(())
 	}
 
-	fn load(mut file: &File ) -> Result<Self, UpkfError> {
+	fn load( file: &'a mut dyn Read ) -> Result<Self, UpkfError> {
 		let signature = file.read_u32::<LittleEndian>().unwrap();
 		if signature != 0x464b5055 {
 			return Err(UpkfError::NotAnUpkFileError)
@@ -355,6 +363,7 @@ impl FileHeader {
 		let mut buf = vec![ 0 as u8; origin_size as usize ];
 		file.read_exact( &mut buf );
 		let origin = String::from_utf8( buf ).unwrap();
+		let chksum = file.read_u128::<LittleEndian>().unwrap();
 		let entry_count = file.read_u64::<LittleEndian>().unwrap();
 		return Ok(
 			FileHeader {
@@ -363,6 +372,7 @@ impl FileHeader {
 				recompressed: recompressed,
 				origin_size: origin_size,
 				origin: origin,
+				chksum: chksum,
 				entry_count: entry_count
 			}
 		)
@@ -383,7 +393,7 @@ struct EntryHeader {
 }
 
 impl EntryHeader {
-	fn save( &self, mut file: &File ) -> Result<(), UpkfError> {
+	fn save( &self, file: &'a mut dyn Write ) -> Result<(), UpkfError> {
 		file.write_u64::<LittleEndian>( self.size );
 		file.write_u32::<LittleEndian>( self.name_size );
 		file.write(self.name.as_bytes() );
@@ -397,7 +407,7 @@ impl EntryHeader {
 		Ok(())
 	}
 
-	fn load( mut file: &File ) -> Result<Self, UpkfError> {
+	fn load( file: &'a mut dyn Read ) -> Result<Self, UpkfError> {
 		let size = file.read_u64::<LittleEndian>().unwrap();
 		let name_size = file.read_u32::<LittleEndian>().unwrap();
 		let mut name_buf = vec![ 0 as u8; name_size as usize ]; file.read_exact( &mut name_buf );
@@ -433,12 +443,12 @@ struct Entry {
 }
 
 impl Entry {
-	fn save( &self, mut file: &File ) -> Result<(), UpkfError> {
+	fn save( &self, file: &'a mut dyn Write ) -> Result<(), UpkfError> {
 		file.write( self.data.deref() );
 		Ok(())
 	}
 
-	fn load(mut file: &File, header: &EntryHeader) -> Result<Self, UpkfError> {
+	fn load( file: &'a mut dyn Read, header: &EntryHeader ) -> Result<Self, UpkfError> {
 		let mut buf = vec![1 as u8; header.size as usize ];
 		file.read_exact( &mut buf );
 		return Ok(
