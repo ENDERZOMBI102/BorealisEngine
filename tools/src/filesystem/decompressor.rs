@@ -16,7 +16,7 @@ pub fn main() {
 	}
 
 	println!( "Loading {}", file_to_decompress.display() );
-	let upkf = Upkf::load( file_to_decompress, true );
+	let upkf = Upkf::load( file_to_decompress, true ).unwrap();
 	println!( "Origin: {}", upkf.get_origin() );
 	println!( "File Size: {}", file_to_decompress.metadata().unwrap().file_size() );
 	println!( "Entry Count: {}", upkf.count() );

@@ -59,7 +59,7 @@ pub struct UpkfLayer {
 impl UpkfLayer {
 	pub fn from_buf( path: PathBuf ) -> Self {
 		UpkfLayer {
-			upkf: Upkf::load( path.as_path(), true )
+			upkf: Upkf::load( path.as_path(), true ).unwrap()
 		}
 	}
 }

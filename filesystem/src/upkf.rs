@@ -81,6 +81,7 @@ pub struct Upkf {
 	path: Option<PathBuf>,  // path of the pak file, may be None for in-memory pakfiles
 	entries: Vec<Element>  // entries
 }
+
 impl Upkf {
 	pub fn add_text_file( &mut self, path: String, data: String, compression: CompressionType ) -> &mut Self {
 		self.add_file(
@@ -123,7 +124,7 @@ impl Upkf {
 		}
 	}
 
-	pub fn load( path: &Path, check_content: bool ) -> Self {
+	pub fn load( path: &Path, check_content: bool ) -> Result<Self, UpkfError> {
 		let mut file = File::open( path ).unwrap();
 		let header = FileHeader::load( &mut file ).unwrap();
 		let mut upkf = Self {
@@ -132,12 +133,18 @@ impl Upkf {
 			entries: vec![]
 		};
 
+		let mut chksum = 0 as u128;
 		for _index in 0 .. header.entry_count {
 			let entry_header = EntryHeader::load( &mut file ).unwrap();
+			chksum += entry_header.crc as u128;
 			let entry = Entry::load( &mut file, &entry_header ).unwrap();
 			upkf.entries.push( Element::load( entry_header, entry, check_content ).unwrap() );
 		}
-		upkf
+
+		if chksum != header.chksum {
+			return Err( UpkfError::Crc32CheckFailed )
+		}
+		Ok( upkf )
 	}
 
 	pub fn save( &self, path: &Path ) -> Result<(), UpkfError> {
