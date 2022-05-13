@@ -109,8 +109,8 @@ impl Upkf {
 			binary: binary,
 			compression: compression,
 			bytes: data,
-			crc32: Option::None,
-			sha256: Option::None
+			crc32: None,
+			sha256: None
 		} );
 		self
 	}
@@ -239,10 +239,10 @@ impl Element {
 		if check_content {
 			// check crc and sha256
 			if crc32fast::hash( &entry.data ) != entry_header.crc {
-				return Result::Err( UpkfError::Crc32CheckFailed );
+				return Err( UpkfError::Crc32CheckFailed );
 			}
 			if sha256::digest_bytes( &entry.data ) != entry_header.sha256 {
-				return Result::Err( UpkfError::Sha256CheckFailed );
+				return Err( UpkfError::Sha256CheckFailed );
 			}
 		}
 		// decompress bytes
@@ -270,8 +270,8 @@ impl Element {
 				binary: entry_header.binary,
 				compression: entry_header.compression_type,
 				bytes: Bytes::copy_from_slice( bytes.get_ref().as_slice() ),
-				crc32: Option::Some( entry_header.crc ),
-				sha256: Option::Some( entry_header.sha256 ),
+				crc32: Some( entry_header.crc ),
+				sha256: Some( entry_header.sha256 ),
 			}
 		)
 	}
@@ -344,11 +344,11 @@ impl FileHeader {
 	fn load(mut file: &File ) -> Result<Self, UpkfError> {
 		let signature = file.read_u32::<LittleEndian>().unwrap();
 		if signature != 0x464b5055 {
-			return Result::Err(UpkfError::NotAnUpkFileError)
+			return Err(UpkfError::NotAnUpkFileError)
 		}
 		let version = file.read_u8().unwrap();
 		if version != 0 {
-			return Result::Err(UpkfError::VersionNotSupportedError)
+			return Err(UpkfError::VersionNotSupportedError)
 		}
 		let recompressed = file.read_u8().unwrap() != 0;
 		let origin_size = file.read_u16::<LittleEndian>().unwrap();
@@ -513,8 +513,8 @@ impl UpkfMeta {
 			} else if !unwrapped["metadata"].is_null() {
 				eprintln!("\t\t- Invalid type for key \"metadata\": expected object got {}", unwrapped["metadata"] )
 			}
-			return Result::Ok( result );
+			return Ok( result );
 		}
-		Result::Err(())
+		Err(())
 	}
 }
