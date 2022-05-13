@@ -93,35 +93,34 @@ impl LayeredFS {
 }
 
 pub fn main() {
-	let mut fs = LayeredFS { layers: vec![
-		Box::new( FolderLayer::from_buf( Path::new(".").canonicalize().unwrap() ) ),
-		Box::new( FolderLayer::from_buf( Path::new("./../tast").canonicalize().unwrap() ) ),
-		// Box::new( UpkfLayer::from_buf( Upkf::load( Path::new("./cfg.upkf"), true ) ) )
-	] };
+	let mut fs = LayeredFS { layers: vec![ ] };
 
 	let mut input = String::new();
 	loop {
 		match std::io::stdin().read_line( &mut input ) {
 			Ok(_n) => {
+				input.remove_matches("\n");
+				input.remove_matches("\r");
 				let command: Vec<&str> = input.split(" ").collect();
 				match command[0] {
-					"has" => println!("{}", fs.contains( fix_path( command[1] ) ) ),
+					"has" => println!("{}", fs.contains( command[1] ) ),
 					"read" => unsafe {
-						let file = fs.get_file( fix_path( command[1] ) );
+						let file = fs.get_file( command[1] );
 						if file.is_ok() {
 							println!( "{}", String::from_utf8_unchecked( file.unwrap().read() ) )
 						} else {
-							println!( "File {} was not found", fix_path( command[1] ) )
+							println!( "File {} was not found", command[1] )
 						}
 					},
-					"find" => println!( "{}", fs.resolve( fix_path( command[1] ) ).unwrap().to_str().unwrap() ),
-					"reverse\n" => {
+					"find" => println!( "{}", fs.resolve( command[1] ).unwrap().to_str().unwrap() ),
+					"reverse" => {
 						fs.layers.reverse();
 						println!("reversed layers order")
 					},
 					"addLayer" => {
 						let prepend = command[1] == "pre";
-						let path = Path::new( fix_path( command[2] ) ).canonicalize().unwrap();
+						dbg!( command[2] );
+						let path = Path::new( command[2] ).canonicalize().unwrap();
 						let mut success_message = String::new();
 						success_message += if prepend { "prepended " } else { "appended " };
 						success_message += path.to_str().unwrap();
@@ -150,14 +149,14 @@ pub fn main() {
 							}
 						}
 					},
-					"help\n" => {
+					"help" => {
 						println!( "Available commands:" );
 						println!( " - has $PATH: Prints true if the file exists, false otherwise" );
 						println!( " - read $PATH: Prints the contents of the file, if found" );
 						println!( " - find $PATH: Prints the full path to the file, if found" );
 						println!( " - addlayer $PREPEND $PATH: Adds a layer to the fs, may be a path to a folder or .upkf file" );
 						println!( " - reverse: Reverses the order of the layers" );
-						println!( " - help: Shows the help message" );
+						println!( " - help: Prints this message" );
 					},
 					cmd => println!( "ERROR: Unknown command {}", cmd )
 				}
@@ -166,8 +165,4 @@ pub fn main() {
 		}
 		input.clear()
 	}
-}
-
-fn fix_path( path: &'a str ) -> &'a str {
-	path.split_at( path.find( "\n" ).unwrap() ).0
 }
