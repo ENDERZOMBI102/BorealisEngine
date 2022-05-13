@@ -1,9 +1,7 @@
 use std::fs::File;
-use std::io::{ErrorKind, Read, Write};
+use std::io::{ErrorKind, Read};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use bytes::{Buf, Bytes};
-use bytes::buf::{Reader, Writer};
 use path_slash::PathBufExt;
 use crate::upkf::{Element, Upkf};
 
@@ -199,7 +197,7 @@ pub fn main() {
 				match command[0] {
 					"has" => println!("{}", fs.contains( fix_path( command[1] ) ) ),
 					"read" => unsafe {
-						let mut file = fs.get_file( fix_path( command[1] ) );
+						let file = fs.get_file( fix_path( command[1] ) );
 						if file.is_ok() {
 							println!( "{}", String::from_utf8_unchecked( file.unwrap().read() ) )
 						} else {
