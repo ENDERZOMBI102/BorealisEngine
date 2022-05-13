@@ -1,7 +1,7 @@
 pub mod layers;
 
 use std::fs::File;
-use std::io::{ErrorKind, Read};
+use std::io::{ErrorKind, Read, Write};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use crate::upkf::Element;
@@ -97,6 +97,8 @@ pub fn main() {
 
 	let mut input = String::new();
 	loop {
+		print!( ">>> " );
+		std::io::stdout().flush();
 		match std::io::stdin().read_line( &mut input ) {
 			Ok(_n) => {
 				input.remove_matches("\n");
@@ -119,7 +121,6 @@ pub fn main() {
 					},
 					"addLayer" => {
 						let prepend = command[1] == "pre";
-						dbg!( command[2] );
 						let path = Path::new( command[2] ).canonicalize().unwrap();
 						let mut success_message = String::new();
 						success_message += if prepend { "prepended " } else { "appended " };
