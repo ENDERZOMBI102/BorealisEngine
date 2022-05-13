@@ -3,6 +3,7 @@ use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use path_slash::PathBufExt;
+use vpk::VPK;
 use crate::upkf::Upkf;
 use crate::layered::{Layer, LayeredFile, LayerMeta};
 
@@ -94,6 +95,49 @@ impl Layer for UpkfLayer {
 			origin: Some( self.upkf.get_origin().to_string() ),
 			filename: self.upkf.get_path().unwrap().to_str().unwrap().to_string(),
 			size: Some( File::open( self.upkf.get_path().unwrap() ).unwrap().metadata().unwrap().len() )
+		}
+	}
+}
+
+pub struct VpkLayer {
+	path: PathBuf,
+	vpk: VPK
+}
+
+impl VpkLayer {
+	pub fn from_buf( path: PathBuf ) -> Self {
+		VpkLayer {
+			path: path.clone(),
+			vpk: vpk::from_path( path.as_path().to_str().unwrap() ).unwrap()
+		}
+	}
+}
+
+impl Layer for VpkLayer {
+	fn resolve( &self, filename: &str ) -> PathBuf {
+		let mut path = PathBuf::from( String::from( self.path.to_str().unwrap() ) + "!" );
+		path.push( filename );
+		path.to_slash().unwrap().parse().unwrap()
+	}
+
+	fn contains( &self, filename: &str ) -> bool {
+		self.vpk.tree.contains_key( filename )
+	}
+
+	fn get_file( &self, filename: &str ) -> Result<LayeredFile, ErrorKind> {
+		for ( name, entry ) in self.vpk.tree.iter() {
+			if name == filename {
+				return Ok( LayeredFile::Vpk { path: self.path.to_str().unwrap().to_string(), entry: Arc::new( &entry ) } )
+			}
+		}
+		Err( ErrorKind::NotFound )
+	}
+
+	fn meta( &self ) -> LayerMeta {
+		LayerMeta {
+			origin: None,
+			filename: self.path.to_str().unwrap().to_string(),
+			size: Some( File::open( &self.path ).unwrap().metadata().unwrap().len() )
 		}
 	}
 }

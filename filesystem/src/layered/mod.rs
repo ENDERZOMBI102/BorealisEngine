@@ -1,22 +1,26 @@
 pub mod layers;
 
 use std::fs::File;
-use std::io::{ErrorKind, Read, Write};
+use std::io::{ErrorKind, Read, Seek, SeekFrom, Write};
+use std::ops::Index;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use vpk::entry::VPKEntry;
 use crate::upkf::Element;
-use crate::layered::layers::{FolderLayer, UpkfLayer};
+use crate::layered::layers::{FolderLayer, UpkfLayer, VpkLayer};
 
 pub enum LayeredFile<'a> {
 	Rust { file: File },
 	Upkf { element: Arc<&'a Element> },
+	Vpk { path: String, entry: Arc<&'a VPKEntry> },
 }
 
 impl LayeredFile<'_> {
 	pub fn size( &self ) -> u64 {
 		return match self {
 			LayeredFile::Rust { file } => file.metadata().unwrap().len(),
-			LayeredFile::Upkf { element } => element.get_content().len() as u64
+			LayeredFile::Upkf { element } => element.get_content().len() as u64,
+			LayeredFile::Vpk { path, entry } => entry.get().unwrap().len() as u64
 		}
 	}
 
@@ -28,7 +32,14 @@ impl LayeredFile<'_> {
 				file2.read_to_end( &mut vec );
 				vec
 			},
-			LayeredFile::Upkf { element } => element.get_content().clone().to_vec()
+			LayeredFile::Upkf { element } => element.get_content().clone().to_vec(),
+			LayeredFile::Vpk { path, entry } => {
+				let mut buf = vec![ 0u8; entry.dir_entry.file_length as usize ];
+				let mut file = File::open( path ).unwrap();
+				file.seek( SeekFrom::Start( entry.dir_entry.archive_offset as u64 ) );
+				file.take( entry.dir_entry.file_length as u64 ).read( buf.as_mut_slice() );
+				buf
+			}
 		}
 	}
 }
@@ -144,18 +155,43 @@ pub fn main() {
 											);
 											println!( "{}", success_message )
 										},
+										// vpk file
+										"vpk" => {
+											fs.add_layer(
+												Box::new( VpkLayer::from_buf( path.canonicalize().unwrap() ) ),
+												prepend
+											);
+											println!( "{}", success_message )
+										},
 										ext => println!( "ERROR: Unsopported file type: {}", ext )
 									}
 								}
 							}
 						}
 					},
+					"listLayers" => {
+						for layer in &fs.layers {
+							println!(
+								"Layer in pos {}: {}",
+								fs.layers.iter().enumerate()
+									.find( |&i| i.1.meta().filename == layer.meta().filename )
+									.unwrap()
+									.0,
+								layer.meta().filename
+							)
+						}
+					},
+					"listFiles" => {
+						println!( "TODO: FINISH THIS" )
+					},
 					"help" => {
 						println!( "Available commands:" );
 						println!( " - has $PATH: Prints true if the file exists, false otherwise" );
 						println!( " - read $PATH: Prints the contents of the file, if found" );
 						println!( " - find $PATH: Prints the full path to the file, if found" );
-						println!( " - addlayer $PREPEND $PATH: Adds a layer to the fs, may be a path to a folder or .upkf file" );
+						println!( " - addlayer $PREPEND $PATH: Adds a layer to the fs, may be a path to a folder or .upkf/.vpk file" );
+						println!( " - listLayers: Lists all layers in this LFS" );
+						println!( " - listFiles: Lists all files present in all layers" );
 						println!( " - reverse: Reverses the order of the layers" );
 						println!( " - help: Prints this message" );
 					},

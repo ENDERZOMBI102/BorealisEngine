@@ -81,6 +81,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
 
 [[package]]
+name = "binread"
+version = "1.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "258d2d861723c05ad02956cae4878ceddb5e05b0dc2841ca73a3479ab7a46f4d"
+dependencies = [
+ "binread_derive",
+]
+
+[[package]]
+name = "binread_derive"
+version = "1.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d63ec80ac459fd10ae68854c26ee1c5ab5ac93866dba8f8a95cabbfeaa79b284"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "bit-set"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -624,6 +644,7 @@ dependencies = [
  "path-slash",
  "savefile",
  "sha256",
+ "vpk",
 ]
 
 [[package]]
@@ -1888,6 +1909,16 @@ name = "version_check"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5fecdca9a5291cc2b8dcf7dc02453fee791a280f3743cb0905f8822ae463b3fe"
+
+[[package]]
+name = "vpk"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4c6481a8dcb02223fa52fdf06d52467c53c6ddaeb3eb11c12772413c274afc3f"
+dependencies = [
+ "binread",
+ "thiserror",
+]
 
 [[package]]
 name = "walkdir"
