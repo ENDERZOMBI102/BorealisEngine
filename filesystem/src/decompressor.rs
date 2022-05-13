@@ -1,12 +1,13 @@
+use std::env;
 use std::os::windows::fs::MetadataExt;
 use std::path::Path;
 use std::process::exit;
 use crate::upkf::Upkf;
 
 pub fn main() {
-	// let argv: Vec<String> = env::args().collect();
-	// let file_to_decompress = Path::new( argv.get(1).unwrap() );
-	let file_to_decompress = Path::new("filesystem.upkf");
+	let argv: Vec<String> = env::args().collect();
+	let file_to_decompress = Path::new( argv.get(1).unwrap() );
+	// let file_to_decompress = Path::new("filesystem.upkf");
 	let no_data_text: String = String::from("N/D");
 
 	if !file_to_decompress.exists() {
@@ -18,6 +19,7 @@ pub fn main() {
 	let upkf = Upkf::load( file_to_decompress, true );
 	println!( "Origin: {}", upkf.get_origin() );
 	println!( "File Size: {}", file_to_decompress.metadata().unwrap().file_size() );
+	println!( "Entry Count: {}", upkf.count() );
 	println!( "Entries:" );
 	for entry in upkf.iter() {
 		let mut meta = entry.get_meta();

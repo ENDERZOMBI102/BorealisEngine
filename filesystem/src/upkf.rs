@@ -3,7 +3,7 @@ use std::fs::File;
 use std::io::{Cursor, ErrorKind, Read, Write};
 use std::fmt::{Debug, Display, Formatter};
 use std::ops::Deref;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use bytes::{Buf, Bytes};
 
@@ -78,9 +78,9 @@ impl TryFrom<&str> for CompressionType {
 
 pub struct Upkf {
 	origin: String,  // origin of the pak
+	path: Option<PathBuf>,  // path of the pak file, may be None for in-memory pakfiles
 	entries: Vec<Element>  // entries
 }
-
 impl Upkf {
 	pub fn add_text_file( &mut self, path: String, data: String, compression: CompressionType ) -> &mut Self {
 		self.add_file(
@@ -117,6 +117,7 @@ impl Upkf {
 
 	pub fn new( origin: String ) -> Self {
 		Self {
+			path: None,
 			origin: origin,
 			entries: vec![]
 		}
@@ -125,7 +126,11 @@ impl Upkf {
 	pub fn load( path: &Path, check_content: bool ) -> Self {
 		let file = File::open( path ).unwrap();
 		let header = FileHeader::load( &file ).unwrap();
-		let mut upkf = Self { origin: header.origin, entries: vec![] };
+		let mut upkf = Self {
+			origin: header.origin,
+			path: Some( path.to_path_buf() ),
+			entries: vec![]
+		};
 
 		for _index in 0 .. header.entry_count {
 			let entry_header = EntryHeader::load( &file ).unwrap();
@@ -144,16 +149,23 @@ impl Upkf {
 		Ok(())
 	}
 
-	pub fn get_path( &self ) -> &Path {
-		Path::new( "" )
+	pub fn get_path( &self ) -> Option<&PathBuf> {
+		match &self.path {
+			None => None,
+			Some( path ) => Some( path )
+		}
 	}
 
 	pub fn get_origin( &self ) -> &String {
 		&self.origin
 	}
 
-	pub fn iter(&self) -> UpkfIterator {
+	pub fn iter( &self ) -> UpkfIterator {
 		UpkfIterator { current_iter_entry: 0, data: &self.entries }
+	}
+
+	pub fn count( &self ) -> usize {
+		self.entries.len()
 	}
 }
 
@@ -166,10 +178,9 @@ impl<'a> Iterator for UpkfIterator<'a> {
 	type Item = &'a Element;
 
 	fn next(&mut self) -> Option<Self::Item> {
-		self.current_iter_entry += 1;
-
 		if self.current_iter_entry < self.data.len() {
-			Some( self.data.get( self.current_iter_entry).unwrap() )
+			self.current_iter_entry += 1;
+			Some( self.data.get( self.current_iter_entry - 1).unwrap() )
 		} else {
 			None
 		}
