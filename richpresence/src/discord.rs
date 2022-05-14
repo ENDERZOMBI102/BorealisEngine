@@ -1,7 +1,7 @@
 use std::{thread, time};
 use discord_rich_presence::{DiscordIpc, DiscordIpcClient};
 use discord_rich_presence::activity::{Activity, Timestamps};
-use tier0::config_file::{ConfigFile, Pair};
+use tier0::config_file::{ConfigFile, KeyValue};
 use crate::get_rp_config;
 
 struct ActivityData {
@@ -103,7 +103,7 @@ pub fn main() {
 	match config.get("rp_discord_token") {
 		Some( pair ) => {
 			match pair {
-				Pair::Int { key: _key, value } => id = *value,
+				KeyValue::Int { key: _key, value } => id = *value,
 				_ => panic!( "Discord richpresence token is not a number!" )
 			}
 		},

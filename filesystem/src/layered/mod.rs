@@ -2,7 +2,6 @@ pub mod layers;
 
 use std::fs::File;
 use std::io::{ErrorKind, Read, Seek, SeekFrom, Write};
-use std::ops::Index;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use vpk::entry::VPKEntry;
@@ -20,7 +19,7 @@ impl LayeredFile<'_> {
 		return match self {
 			LayeredFile::Rust { file } => file.metadata().unwrap().len(),
 			LayeredFile::Upkf { element } => element.get_content().len() as u64,
-			LayeredFile::Vpk { path, entry } => entry.get().unwrap().len() as u64
+			LayeredFile::Vpk { path: _path, entry } => entry.get().unwrap().len() as u64
 		}
 	}
 

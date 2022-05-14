@@ -1,6 +1,6 @@
 use std::{thread, time};
 use steamworks::{Client};
-use tier0::config_file::Pair;
+use tier0::config_file::KeyValue;
 use crate::get_rp_config;
 
 // TODO: this is broken, the steam chat doesn't show the status, both inside and outside of the game, find why.
@@ -12,7 +12,7 @@ pub fn main() {
 	match config.get("steam_appid") {
 		Some( pair ) => {
 			match pair {
-				Pair::Int { key: _key, value } => appid = *value,
+				KeyValue::Int { key: _key, value } => appid = *value,
 				_ => panic!( "Discord richpresence token is not a number!" )
 			}
 		},

@@ -8,7 +8,7 @@ use log::debug;
 type IoResult = std::io::Result<()>;
 
 #[derive(Clone)]
-pub enum Pair {
+pub enum KeyValue {
     Float { key: String, value: f64 },
     Int { key: String, value: i64 },
     String { key: String, value: String },
@@ -16,28 +16,28 @@ pub enum Pair {
     Empty { key: String }
 }
 
-impl Pair {
+impl KeyValue {
 	pub fn float( &self ) -> Option<f64> {
 		match self {
-			Pair::Float { key: _key, value } => Some( value.clone() ),
+			KeyValue::Float { key: _key, value } => Some( value.clone() ),
 			_ => None
 		}
 	}
 	pub fn integer( &self ) -> Option<i64> {
 		match self {
-			Pair::Int { key: _key, value } => Some( value.clone() ),
+			KeyValue::Int { key: _key, value } => Some( value.clone() ),
 			_ => None
 		}
 	}
 	pub fn string( &self ) -> Option<String> {
 		match self {
-			Pair::String { key: _key, value } => Some( value.clone() ),
+			KeyValue::String { key: _key, value } => Some( value.clone() ),
 			_ => None
 		}
 	}
 	pub fn color( &self ) -> Option<Vec<i8>> {
 		match self {
-			Pair::Color { key: _key, value } => Some( value.clone() ),
+			KeyValue::Color { key: _key, value } => Some( value.clone() ),
 			_ => None
 		}
 	}
@@ -45,7 +45,7 @@ impl Pair {
 
 
 pub struct ConfigFile {
-    items: Vec<Pair>,
+    items: Vec<KeyValue>,
     path: Option<String>
 }
 
@@ -77,21 +77,21 @@ impl ConfigFile {
 
 	        // is it nothing?
 	        if value.is_empty() {
-		        config.items.push( Pair::Empty { key: name } );
+		        config.items.push( KeyValue::Empty { key: name } );
 		        continue;
 	        }
 
 	        // is it a float?
 	        let float_res = value.parse::<f64>();
 	        if float_res.is_ok() && value.contains(".") {
-				config.items.push( Pair::Float { key: name.clone(), value: float_res.unwrap() } );
+				config.items.push( KeyValue::Float { key: name.clone(), value: float_res.unwrap() } );
 		        continue;
 	        }
 
 	        // is it an integer?
 	        let int_res = value.parse::<i64>();
 	        if int_res.is_ok() {
-		        config.items.push( Pair::Int { key: name.clone(), value: int_res.unwrap() } );
+		        config.items.push( KeyValue::Int { key: name.clone(), value: int_res.unwrap() } );
 		        continue;
 	        }
 
@@ -101,7 +101,7 @@ impl ConfigFile {
 		        .filter( |v| v.is_ok() )
 		        .collect();
 	        if color_res.len() == 3 || color_res.len() == 4 {
-		        config.items.push( Pair::Color {
+		        config.items.push( KeyValue::Color {
 			        key: name.clone(),
 			        value: color_res.iter()
 				        .map( |v| v.clone().unwrap() )
@@ -117,7 +117,7 @@ impl ConfigFile {
 		        value.remove( value.len() - 1 );
 		        value.remove( 0 );
 	        }
-	        config.items.push( Pair::String { key: name.clone(), value: value.clone() } );
+	        config.items.push( KeyValue::String { key: name.clone(), value: value.clone() } );
         }
 
         return config;
@@ -129,19 +129,19 @@ impl ConfigFile {
 
 		for item in &self.items {
 			match item {
-				Pair::Float { key: _key, value: _value } => {
+				KeyValue::Float { key: _key, value: _value } => {
 					res = writeln!( file, "{} {}", _key, _value );
 				}
-				Pair::Int { key: _key, value: _value } => {
+				KeyValue::Int { key: _key, value: _value } => {
 					res = writeln!( file, "{} {}", _key, _value );
 				}
-				Pair::String { key: _key, value: _value } => {
+				KeyValue::String { key: _key, value: _value } => {
 					res = writeln!( file, "{} {}", _key, _value );
 				}
-				Pair::Color { key: _key, value: _value } => {
+				KeyValue::Color { key: _key, value: _value } => {
 					res = writeln!( file, "{} {} {} {}", _key, _value[0], _value[1], _value[2] );
 				}
-				Pair::Empty { key: _key } => {
+				KeyValue::Empty { key: _key } => {
 					res = writeln!( file, "{}", _key );
 				}
 			}
@@ -164,34 +164,34 @@ impl ConfigFile {
 		self.save()
 	}
 
-	pub fn iterator( &self ) -> impl Iterator< Item = &Pair > {
+	pub fn iterator( &self ) -> impl Iterator< Item = &KeyValue> {
 		return ( &self.items ).into_iter();
 	}
 
-	pub fn get( &self, key: &str ) -> Option< &Pair > {
+	pub fn get( &self, key: &str ) -> Option< &KeyValue> {
 		for pair in &self.items {
 			match pair {
-				Pair::Float { key: _key, value: _ } => {
+				KeyValue::Float { key: _key, value: _ } => {
 					if _key == key {
 						return Some( &pair );
 					}
 				}
-				Pair::Int { key: _key, value: _ } => {
+				KeyValue::Int { key: _key, value: _ } => {
 					if _key == key {
 						return Some( &pair );
 					}
 				}
-				Pair::String { key: _key, value: _ } => {
+				KeyValue::String { key: _key, value: _ } => {
 					if _key == key {
 						return Some( &pair );
 					}
 				}
-				Pair::Color { key: _key, value: _ } => {
+				KeyValue::Color { key: _key, value: _ } => {
 					if _key == key {
 						return Some( &pair );
 					}
 				}
-				Pair::Empty { key: _key } => {
+				KeyValue::Empty { key: _key } => {
 					if _key == key {
 						return Some( &pair );
 					}
@@ -202,35 +202,35 @@ impl ConfigFile {
 		return None;
 	}
 
-	pub fn set( &mut self, key: &str, value: Pair ) {
+	pub fn set( &mut self, key: &str, value: KeyValue) {
 		for idx in 0 .. self.items.len() {
 			let item = &self.items[idx];
 			match item {
-				Pair::Float { key: _key, value: _ } => {
+				KeyValue::Float { key: _key, value: _ } => {
 					if key == _key {
 						self.items[idx] = value.clone();
 						return;
 					}
 				}
-				Pair::Int { key: _key, value: _ } => {
+				KeyValue::Int { key: _key, value: _ } => {
 					if key == _key {
 						self.items[idx] = value.clone();
 						return;
 					}
 				}
-				Pair::String { key: _key, value: _ } => {
+				KeyValue::String { key: _key, value: _ } => {
 					if key == _key {
 						self.items[idx] = value.clone();
 						return;
 					}
 				}
-				Pair::Color { key: _key, value: _ } => {
+				KeyValue::Color { key: _key, value: _ } => {
 					if key == _key {
 						self.items[idx] = value.clone();
 						return;
 					}
 				}
-				Pair::Empty { key: _key } => {
+				KeyValue::Empty { key: _key } => {
 					if key == _key {
 						self.items[idx] = value.clone();
 						return;
