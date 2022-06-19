@@ -234,7 +234,7 @@ pub struct Element {
 }
 
 impl Element {
-	fn write( &self, file: &'a mut dyn Write ) -> Result<u32, UpkfError> {
+	fn write<'a>( &self, file: &'a mut dyn Write ) -> Result<u32, UpkfError> {
 		// compress bytes
 		let mut bytes = Cursor::new( vec![] );
 		match self.compression {
@@ -370,7 +370,7 @@ impl FileHeader {
 		}
 	}
 
-	fn save( &self, file: &'a mut dyn Write ) -> Result<(), UpkfError> {
+	fn save<'a>( &self, file: &'a mut dyn Write ) -> Result<(), UpkfError> {
 		file.write_u32::<LittleEndian>( self.signature )?;
 		file.write_u8( self.version )?;
 		file.write_u8( self.recompressed as u8 )?;
@@ -381,7 +381,7 @@ impl FileHeader {
 		Ok(())
 	}
 
-	fn load( file: &'a mut dyn Read ) -> Result<Self, UpkfError> {
+	fn load<'a>( file: &'a mut dyn Read ) -> Result<Self, UpkfError> {
 		let signature = file.read_u32::<LittleEndian>()?;
 		if signature != 0x464b5055 {
 			return Err(UpkfError::NotAnUpkFileError)
@@ -425,7 +425,7 @@ struct EntryHeader {
 }
 
 impl EntryHeader {
-	fn save( &self, file: &'a mut dyn Write ) -> Result<(), UpkfError> {
+	fn save<'a>( &self, file: &'a mut dyn Write ) -> Result<(), UpkfError> {
 		file.write_u64::<LittleEndian>( self.size )?;
 		file.write_u32::<LittleEndian>( self.name_size )?;
 		file.write(self.name.as_bytes() )?;
@@ -439,7 +439,7 @@ impl EntryHeader {
 		Ok(())
 	}
 
-	fn load( file: &'a mut dyn Read ) -> Result<Self, UpkfError> {
+	fn load<'a>( file: &'a mut dyn Read ) -> Result<Self, UpkfError> {
 		let size = file.read_u64::<LittleEndian>()?;
 		let name_size = file.read_u32::<LittleEndian>()?;
 		let mut name_buf = vec![ 0 as u8; name_size as usize ]; file.read_exact( &mut name_buf )?;
@@ -475,12 +475,12 @@ struct Entry {
 }
 
 impl Entry {
-	fn save( &self, file: &'a mut dyn Write ) -> Result<(), UpkfError> {
+	fn save<'a>( &self, file: &'a mut dyn Write ) -> Result<(), UpkfError> {
 		file.write( self.data.deref() )?;
 		Ok(())
 	}
 
-	fn load( file: &'a mut dyn Read, header: &EntryHeader ) -> Result<Self, UpkfError> {
+	fn load<'a>( file: &'a mut dyn Read, header: &EntryHeader ) -> Result<Self, UpkfError> {
 		let mut buf = vec![1 as u8; header.size as usize ];
 		file.read_exact( &mut buf )?;
 		return Ok(
