@@ -12,6 +12,7 @@ fn main() {
 		"discord_rp" => richpresence::discord::main(),
 		"discord_rp2" => richpresence::discord::main2(),
 		"steam_rp" => richpresence::steam::main(),
+		"format" => tier0::format::main(),
 		name => error!( "Unrecognized executable name: {}", name )
 	}
 }
