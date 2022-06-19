@@ -19,3 +19,4 @@
     sha256 = '1.0.3'
     path-slash = '0.1.4'
     vpk = '0.1.4'
+    bin-layout = '5.1.0'

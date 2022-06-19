@@ -81,6 +81,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
 
 [[package]]
+name = "bin-layout"
+version = "5.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0eff45bb6683c26978fdc2b44329810e505dcd29b240aa573c6cdcd34cd580c1"
+dependencies = [
+ "bin-layout-derive",
+ "stack-array",
+ "util-cursor",
+]
+
+[[package]]
+name = "bin-layout-derive"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c33970b38870bb997bf9d174d53c5f161c3e18c95422058c6497b37d074f7de9"
+dependencies = [
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "binread"
 version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -634,6 +655,7 @@ version = "0.1.0"
 name = "filesystem"
 version = "0.1.0"
 dependencies = [
+ "bin-layout",
  "byteorder",
  "bytes",
  "bzip2",
@@ -1759,6 +1781,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "stack-array"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "332be12b550e41ddc136fd0bd2ef1272e2a49e1ee2a843770f0ccbd86f6fd3b7"
+
+[[package]]
 name = "steamworks"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1894,6 +1922,12 @@ name = "unicode-xid"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ccb82d61f80a663efe1f787a51b16b5a51e3314d6ac365b08639f52387b33f3"
+
+[[package]]
+name = "util-cursor"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1ef0862c74ac2a3515aec683cd6d03fb5b7f3adfafdbe21ef619041c322118eb"
 
 [[package]]
 name = "uuid"
