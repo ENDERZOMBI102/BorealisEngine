@@ -13,6 +13,7 @@ impl RawArg {
 	pub(crate) fn is_arg(&self) -> bool {
 		return matches!(self.arg_type, ArgType::Arg)
 	}
+
 	pub(crate) fn is_value(&self) -> bool {
 		return !self.is_arg()
 	}
@@ -32,6 +33,7 @@ pub fn main() {
 	let mut raw_arguments: Vec<RawArg> = Vec::new();
 	let mut arguments: Vec<Argument> = Vec::new();
 	let mut i = 0;
+
 	for arg in args {
 		if exec.is_none() {
 			exec = Some( arg.clone() )
@@ -43,6 +45,7 @@ pub fn main() {
 			}
 		}
 	}
+
 	while i < raw_arguments.len() {
 		if raw_arguments.len() > i + 1 && raw_arguments[i + 1].is_value() {
 			arguments.push(
