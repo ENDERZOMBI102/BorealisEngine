@@ -180,7 +180,7 @@ pub fn main() {
 							}
 						}
 					}
-					"clear" => print!("\x1B[2J")
+					"clear" => print!("\x1B[2J"),
 					"help" => {
 						println!( "Available commands:" );
 						println!( " - has $PATH: Prints true if the file exists, false otherwise" );
