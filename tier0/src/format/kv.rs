@@ -1,20 +1,20 @@
 use std::fmt::Debug;
 
 #[derive(Debug)]
-enum Token {
+pub enum Token {
 	Open,
 	Close,
 	Word { value: String }
 }
 
 #[derive(Debug)]
-enum KeyValues {
+pub enum KeyValues {
 	Root { values: Vec<KeyValues> },
 	KeyValue { key: String, value: String },
 	KeyMap { key: String, values: Vec<KeyValues> },
 }
 
-fn parse( tokens: Vec<Token> ) -> KeyValues {
+pub fn parse( tokens: Vec<Token> ) -> KeyValues {
 	let mut vac: Vec<KeyValues> = Vec::new();
 	let mut index = 0;
 	
@@ -25,7 +25,7 @@ fn parse( tokens: Vec<Token> ) -> KeyValues {
 	KeyValues::Root { values: vac }
 }
 
-fn tokenize( string: &str ) -> Vec< Token > {
+pub fn tokenize( string: &str ) -> Vec< Token > {
 	let mut vac: Vec<Token> = Vec::new();
 	let mut word = String::new();
 	let stringy = string.to_string();
@@ -55,6 +55,7 @@ fn tokenize( string: &str ) -> Vec< Token > {
 }
 
 pub(crate) fn main() {
+	// FIXME: There's an infinite loop somewhere...
 	let vdfdata = "
 		a b c d abcd { \"\" \"\" \"}\" { \"a\" b [$cde] } }
 		something \"quoted\" /*and*/ something not/quite\\quoted
