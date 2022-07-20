@@ -1883,6 +1883,7 @@ version = "0.1.0"
 dependencies = [
  "bytes",
  "filesystem",
+ "tier0",
  "walkdir",
 ]
 
