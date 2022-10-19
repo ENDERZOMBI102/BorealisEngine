@@ -9,6 +9,8 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tier0/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tools/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/uscript/angelscript/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/uscript/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

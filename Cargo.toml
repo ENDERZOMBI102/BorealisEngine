@@ -10,7 +10,10 @@
 [workspace]
     resolver = '2'
     members = [
-        '.', 'filesystem', 'renderer', 'richpresence', 'tier0', 'engine', 'tools'
+        '.', 'filesystem', 'renderer',
+        'richpresence', 'tier0', 'engine',
+        'tools',
+        'uscript', 'uscript/angelscript'
     ]
 
 [dependencies]

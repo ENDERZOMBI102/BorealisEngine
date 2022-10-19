@@ -1,5 +1,11 @@
 #![feature(string_remove_matches)]
+#![feature(slice_pattern)]
+#![allow(non_snake_case)]
+#![feature(type_alias_impl_trait)]
 
+use core::slice::SlicePattern;
+use std::collections::HashMap;
+use std::fmt::Display;
 use std::io::Write;
 use std::path::Path;
 use filesystem::layered::LayeredFS;
@@ -25,161 +31,42 @@ pub fn main() {
 				input.remove_matches("\r");
 				let command: Vec<&str> = input.split(" ").collect();
 				match command[0] {
-					"has" => {
-						if command.len() != 2 {
-							eprintln!("usage: has $PATH");
-							continue
-						}
-						println!("{}", fs.contains( command[1] ) )
+					"has" => match command.as_slice() {
+						[ "has", path ] => println!("{}", fs.contains( path ) ),
+						_ => eprintln!("usage: has $PATH")
 					},
-					"read" => {
-						if let Ok( file ) = fs.get_file( command[1] ) {
-							match file.read_string() {
+					"read" => match command.as_slice() {
+						[ "read", path ] => match fs.get_file(path) {
+							Ok( file ) => match file.read_string() {
 								Ok( data ) => println!( "{}", data ),
-								Err( err ) => println!( "read: Failed to read file \"{}\": {}", command[1], err )
-							}
-						} else {
-							println!( "File {} was not found", command[1] )
-						}
+								Err( err ) => println!( "read: Failed to read file \"{}\": {}", path, err )
+							},
+							_ => eprintln!( "File {path} was not found" )
+						},
+						_ => eprintln!( "usage: read $PATH" )
 					},
-					"find" => {
-						if command.len() != 2 {
-							eprintln!("usage: find $PATH");
-							continue
-						}
-						match fs.resolve( command[1] ) {
-							None => eprintln!( "find: cannot find path \"{}\"", command[1] ),
+					"find" => match command.as_slice() {
+						[ "find", path ] => match fs.resolve( path ) {
+							None => eprintln!( "find: cannot find path \"{}\"", path ),
 							Some( path ) => println!( "{}", path.to_str().unwrap() )
-						}
+						},
+						_ => eprintln!("usage: find $PATH")
 					},
 					"reverse" => {
 						fs.layers.reverse();
 						println!("reversed layers order")
 					},
-					"addLayer" => {
-						if command.len() == 1 {
-							eprintln!("usage: addLayer [--pre] $PATH");
-							continue
-						}
-						let prepend = command.contains( &"--pre" );
-						let path = Path::new( command.last().unwrap() ).canonicalize().unwrap();
-						let mut success_message = String::new();
-						success_message += if prepend { "prepended " } else { "appended " };
-						success_message += path.to_str().unwrap();
-						success_message += " as new layer";
-
-						if path.is_dir() {
-							// folder
-							fs.add_layer( Box::new( FolderLayer::from_buf( path.clone() ) ), prepend );
-							println!( "{}", success_message )
-						} else {
-							match path.extension() {
-								None => println!( "ERROR: If adding a file, please make sure it has a valid extension." ),
-								Some( ext ) => {
-									match ext.to_str().unwrap() {
-										// upkf file
-										"upkf" => {
-											fs.add_layer(
-												Box::new( UpkfLayer::from_buf( path.canonicalize().unwrap() ) ),
-												prepend
-											);
-											println!( "{}", success_message )
-										},
-										// vpk file
-										"vpk" => {
-											fs.add_layer(
-												Box::new( VpkLayer::from_buf( path.canonicalize().unwrap() ) ),
-												prepend
-											);
-											println!( "{}", success_message )
-										},
-										ext => println!( "ERROR: Unsupported file type: {}", ext )
-									}
-								}
-							}
-						}
+					"addLayer" => match command.as_slice() {
+						[ "addLayer" ] | [ "addLayer", "--pre" ] => eprintln!("usage: addLayer [--pre] $PATH"),
+						[ "addLayer", "--pre", path ] => addLayerHandler( &mut fs, true, path ),
+						[ "addLayer", path ] => addLayerHandler( &mut fs, false, path ),
+						_ => eprintln!("usage: addLayer [--pre] $PATH")
 					},
-					"listLayers" => {
-						for layer in &fs.layers {
-							println!(
-								"Layer in pos {}: {}",
-								fs.layers.iter().enumerate()
-									.find( |&i| i.1.meta().filename == layer.meta().filename )
-									.unwrap()
-									.0,
-								layer.meta().filename
-							)
-						}
+					"listLayers" => for layer in &fs.layers {
+						// println!( "Layer in pos {}: {}", fs.layers.as_slice().index_of( layer ), layer.meta().filename )
 					},
-					"listFiles" => println!( "TODO: FINISH THIS" ),
-					"parse" => {
-						// parse [ --help | [ --detect | --tokenize | --lex | --ugly ] file ]
-						if command.len() == 1 {
-							eprintln!( "usage: parse [ --help | [ --detect | --tokenize | --lex | --ugly | ] file ]" );
-						} else if command.contains(&"--help") {
-							println!( "Parsing command line utility v1" );
-							println!( "usage: parse [ --help | [ --detect | --tokenize | --lex | --ugly | ] file ]" );
-							println!( "\t--help            prints this message" );
-							println!( "\t--detect   $PATH  prints the detected format of a file" );
-							println!( "\t--tokenize $PATH  tokenize a file and print the stream of tokens" );
-							println!( "\t--lex      $PATH  tokenize and lex a file and print the stream of tokens" );
-							println!( "\t--ugly     $PATH  parses a file and print the resulting object in a single line" );
-							println!( "\t           $PATH  parses a file and pretty print the resulting object" );
-						} else {
-							let file = command.last().unwrap();
-							let ext: &str = file.split(".").collect::<Vec<&str>>().last().unwrap();
-
-							// load the file data as an UTF-8 string
-							let data = match fs.get_file( file ) {
-								Err( kind ) => {
-									eprintln!( "parse: failed to load file \"{}\": {}", file, kind );
-									continue
-								}
-								Ok( layeredFile ) => match layeredFile.read_string() {
-									Err( kind ) => {
-										eprintln!("parse: failed to read file \"{}\": {}", file, kind );
-										continue
-									}
-									Ok( string ) => string
-								}
-							};
-
-							if command.contains(&"--tokenize") {
-								match ext {
-									"kv" | "vdf" => println!( "{:?}", kv::tokenize( data.as_str() ) ),
-									"e" => println!( "{:?}", e::tokenize( data.as_str(), file ) ),
-									_ => eprintln!( "parse: Cannot tokenize file: Unknown file type" )
-								}
-							} else if command.contains(&"--lex") {
-								match ext {
-									"kv" | "vdf" => println!( "{:?}", kv::parse( kv::tokenize( data.as_str() ) ) ),
-									"e" => println!( "{:?}", e::parse( e::tokenize( data.as_str(), file ) ) ),
-									_ => eprintln!( "parse: Cannot lex file: Unknown file type" )
-								}
-							} else if command.contains(&"--detect") {
-								println!(
-									"Detected format: {}",
-									match ext {
-										"kv" | "vdf" => "Valve's KeyValues 1",
-										"e" => "EZ102's E format",
-										_ => "Unknown"
-									}
-								)
-							} else if command.contains(&"--ugly") {
-								match ext {
-									"kv" | "vdf" => println!( "{}", "" ),
-									"e" => println!( "{}", e::loads( data.as_str(), file ) ),
-									_ => eprintln!( "parse: Cannot parse file: Unknown file type" )
-								}
-							} else {
-								match ext {
-									"kv" | "vdf" => println!( "{}", "" ),
-									"e" => println!( "{}", e::loads( data.as_str(), file ) ),
-									_ => eprintln!( "parse: Cannot parse file: Unknown file type" )
-								}
-							}
-						}
-					}
+					"listFiles" => eprintln!( "TODO: FINISH THIS" ),
+					"parse" => parseHandler( &mut fs, command[ 1 .. command.len() - 1 ].as_slice() ),
 					"clear" => print!("\x1B[2J"),
 					"help" => {
 						println!( "Available commands:" );
@@ -200,5 +87,89 @@ pub fn main() {
 			Err(error) => println!("ERROR: {}", error)
 		}
 		input.clear()
+	}
+
+	fn addLayerHandler( fs: &mut LayeredFS, prepend: bool, rawPath: &str ) {
+		let path = Path::new( rawPath ).canonicalize().unwrap();
+		let success_message = format!( "{} {} as new layer", if prepend { "prepended" } else { "appended" }, path.display() );
+
+		if path.is_dir() {
+			// folder
+			fs.add_layer( Box::new( FolderLayer::from_buf( path.clone() ) ), prepend );
+			println!( "{}", success_message )
+		} else {
+			match path.extension() {
+				None => eprintln!( "ERROR: If adding a file, please make sure it has a valid extension." ),
+				Some( ext ) => {
+					match ext.to_str().unwrap() {
+						// upkf file
+						"upkf" => fs.add_layer( Box::new( UpkfLayer::from_buf( path.canonicalize().unwrap() ) ), prepend ),
+						// vpk file
+						"vpk" => fs.add_layer( Box::new( VpkLayer::from_buf( path.canonicalize().unwrap() ) ), prepend ),
+						ext => {
+							println!( "ERROR: Unsupported file type: {}", ext );
+							return;
+						}
+					}
+					println!( "{}", success_message )
+				}
+			}
+		}
+	}
+
+	fn parseHandler( fs: &mut LayeredFS, args: &[&str]) {
+		// parse [ --help | [ --detect | --tokenize | --lex | --ugly ] file ]
+		type Handler<'a> = &'a impl Fn(&str, &str) -> dyn Display;
+
+		let process = | path, stage, handlers: HashMap<&str, Handler> | match fs.get_file(path) {
+			Err(kind) => eprintln!("parse: failed to load file \"{}\": {}", path, kind),
+			Ok(layeredFile) => match layeredFile.read_string() {
+				Err(kind) => eprintln!("parse: failed to read file \"{}\": {}", path, kind),
+				Ok(contents) => {
+					let ext =  Path::new(path).extension().unwrap_or("".as_ref() ).to_str().unwrap();
+					match handlers.get( ext ) {
+						Some( handler ) => println!( "{:?}", handler( contents.as_str(), path ).to_string() ),
+						None => eprintln!( "parse: Cannot {stage} file: Unknown file type '{ext}'" )
+					}
+				}
+			}
+		};
+
+		let mut map = HashMap::<&str, Handler>::new();
+		match args.as_slice() {
+			[ "--help" ] => {
+				println!( "Parsing command line utility v1" );
+				println!( "usage: parse [ --help | [ --detect | --tokenize | --lex | --ugly ] file ]" );
+				println!( "\t--help            prints this message" );
+				println!( "\t--detect   $PATH  prints the detected format of a file" );
+				println!( "\t--tokenize $PATH  tokenize a file and print the stream of tokens" );
+				println!( "\t--lex      $PATH  tokenize and lex a file and print the stream of tokens" );
+				println!( "\t--ugly     $PATH  parses a file and print the resulting object in a single line" );
+				println!( "\t           $PATH  parses a file and pretty print the resulting object" );
+			},
+			[ "--detect", path ] => println!(
+				"Detected format: {}",
+				match Path::new(path).extension().unwrap_or("".as_ref()).to_str().unwrap() {
+					"kv" | "vdf" => "Valve's KeyValues 1",
+					"kv2" => "Valve's KeyValues 2",
+					"kv3" => "Valve's KeyValues 3",
+					"e" => "EZ102's E format",
+					_ => "Unknown"
+				}
+			),
+			[ "--tokenize", path ] => {
+				map.insert( "e", &| path, data | e::tokenize( data, path ) );
+				process( path, "tokenize", map )
+			},
+			[ "--lex", path ] => {
+				map.insert( "e", &| path, data | e::lex(e::tokenize( data, path ) ) );
+				process( path, "lex", map )
+			},
+			[ "--ugly", path ] | [ path ] => {
+				map.insert( "e", &| path, data | e::loads( data, path ) );
+				process( path, "parse", map )
+			},
+			_ => eprintln!( "usage: parse [ --help | [ --detect | --tokenize | --lex | --ugly ] file ]" ),
+		}
 	}
 }

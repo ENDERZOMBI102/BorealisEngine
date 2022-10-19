@@ -248,14 +248,14 @@ impl Tokenizer {
 	}
 }
 
-struct Parser {
+struct Lexer {
 	tok_list: Vec<Token>,
 	index: usize
 }
 
-impl Parser {
+impl Lexer {
 	fn new( tok_list: Vec<Token> ) -> Self {
-		Parser {
+		Lexer {
 			tok_list: tok_list,
 			index: 0
 		}
@@ -319,14 +319,14 @@ impl Parser {
 	}
 }
 
-struct Objectifier {
+struct Parser {
 	tokens: Vec<Token>,
 	index: usize
 }
 
-impl Objectifier {
+impl Parser {
 	fn new( tokens: Vec<Token> ) -> Self {
-		Objectifier { tokens: tokens, index: 0 }
+		Parser { tokens: tokens, index: 0 }
 	}
 
 	fn peek( &self, offset: usize ) -> &Token {
@@ -452,17 +452,17 @@ pub fn tokenize( string: &str, file: &str ) -> Vec<Token> {
 	Tokenizer::new(string, file).tokenize()
 }
 
-pub fn parse( tok_list: Vec<Token> ) -> Vec<Token> {
-	Parser::new(tok_list).parse()
+pub fn lex(tok_list: Vec<Token> ) -> Vec<Token> {
+	Lexer::new(tok_list).parse()
 }
 
-pub fn objectify( tok_list: Vec<Token> ) -> E {
-	Objectifier::new(tok_list).objectify()
+pub fn parse(tok_list: Vec<Token> ) -> E {
+	Parser::new(tok_list).objectify()
 }
 
 pub fn load( path: &Path ) -> E {
-	objectify(
-		parse(
+	parse(
+		lex(
 			tokenize(
 				read_to_string( path ).unwrap().as_str(),
 				path.to_str().unwrap()
@@ -472,16 +472,16 @@ pub fn load( path: &Path ) -> E {
 }
 
 pub fn loads( data: &str, file: &str ) -> E {
-	objectify( parse( tokenize( data, file ) ) )
+	parse( lex( tokenize(data, file ) ) )
 }
 
 pub(crate) fn main() {
 	let tokens = tokenize( read_to_string( Path::new("test.e") ).unwrap().as_str(), "test.e" );
 	println!( "Tokens: {:?}", tokens );
 
-	let parsed_tokens = parse( tokens );
+	let parsed_tokens = lex( tokens );
 	println!( "Tokens: {:?}", parsed_tokens );
 
-	let object = objectify( parsed_tokens );
+	let object = parse( parsed_tokens );
 	println!( "Object: {}", object )
 }
