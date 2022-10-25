@@ -2,15 +2,17 @@
 #![feature(slice_pattern)]
 #![allow(non_snake_case)]
 #![feature(type_alias_impl_trait)]
+#![feature(fn_traits)]
 
 use core::slice::SlicePattern;
 use std::collections::HashMap;
-use std::fmt::Display;
-use std::io::Write;
+use std::fmt::{Debug, Display};
+use std::io::{ErrorKind, Write};
 use std::path::Path;
-use filesystem::layered::LayeredFS;
+
+use filesystem::layered::{LayeredFile, LayeredFS};
 use filesystem::layered::layers::{FolderLayer, UpkfLayer, VpkLayer};
-use tier0::format::{e, kv};
+use tier0::format::e;
 
 pub fn main() {
 	let mut fs = LayeredFS {
@@ -19,7 +21,7 @@ pub fn main() {
 		]
 	};
 
-	println!( "FileSystem CLI v1" );
+	println!( "FileSystem CLI v1.2" );
 
 	let mut input = String::new();
 	loop {
@@ -32,7 +34,12 @@ pub fn main() {
 				let command: Vec<&str> = input.split(" ").collect();
 				match command[0] {
 					"has" => match command.as_slice() {
-						[ "has", path ] => println!("{}", fs.contains( path ) ),
+						[ "has", path ] => {
+							match fs.get_file() {
+								Ok( file ) => println!( "File `{}` found in layer {}", file ),
+								Err(_) => {}
+							}
+						},
 						_ => eprintln!("usage: has $PATH")
 					},
 					"read" => match command.as_slice() {
@@ -52,31 +59,17 @@ pub fn main() {
 						},
 						_ => eprintln!("usage: find $PATH")
 					},
-					"reverse" => {
-						fs.layers.reverse();
-						println!("reversed layers order")
-					},
-					"addLayer" => match command.as_slice() {
-						[ "addLayer" ] | [ "addLayer", "--pre" ] => eprintln!("usage: addLayer [--pre] $PATH"),
-						[ "addLayer", "--pre", path ] => addLayerHandler( &mut fs, true, path ),
-						[ "addLayer", path ] => addLayerHandler( &mut fs, false, path ),
-						_ => eprintln!("usage: addLayer [--pre] $PATH")
-					},
-					"listLayers" => for layer in &fs.layers {
-						// println!( "Layer in pos {}: {}", fs.layers.as_slice().index_of( layer ), layer.meta().filename )
-					},
+					"layer" => layerHandler( &mut fs, command ),
 					"listFiles" => eprintln!( "TODO: FINISH THIS" ),
-					"parse" => parseHandler( &mut fs, command[ 1 .. command.len() - 1 ].as_slice() ),
+					"parse" => parseHandler( &mut fs, command ),
 					"clear" => print!("\x1B[2J"),
 					"help" => {
 						println!( "Available commands:" );
 						println!( " - has $PATH: Prints true if the file exists, false otherwise" );
 						println!( " - read $PATH: Prints the contents of the file, if found" );
 						println!( " - find $PATH: Prints the full path to the file, if found" );
-						println!( " - addlayer $PREPEND $PATH: Adds a layer to the fs, may be a path to a folder or .upkf/.vpk file" );
-						println!( " - listLayers: Lists all layers in this LFS" );
+						println!( " - layer $SUBCOMMAND [$ARGUMENTS]: Manages layers" );
 						println!( " - listFiles: Lists all files present in all layers" );
-						println!( " - reverse: Reverses the order of the layers" );
 						println!( " - parse [$OPTIONS] $PATH: Parses a file of a supported format, use `parse --help` for more info" );
 						println!( " - clear: Clears the terminal" );
 						println!( " - help: Prints this message" );
@@ -89,53 +82,70 @@ pub fn main() {
 		input.clear()
 	}
 
-	fn addLayerHandler( fs: &mut LayeredFS, prepend: bool, rawPath: &str ) {
-		let path = Path::new( rawPath ).canonicalize().unwrap();
-		let success_message = format!( "{} {} as new layer", if prepend { "prepended" } else { "appended" }, path.display() );
+	fn layerHandler( fs: &mut LayeredFS, mut args: Vec<&str> ) {
+		args.remove(0); // remove "layer" prefix
+		match args.as_slice() {
+			[ "help" ] => {
+				println!( "Layer manager v1.1" );
+				println!( "usage: layer ( help | list | reverse | ( append | prepend ) $PATH )" );
+				println!( "\thelp              prints this message" );
+				println!( "\tappend     $PATH  Adds a layer to the end of the fs, may be a path to a folder or .upkf/.vpk file" );
+				println!( "\tprepend    $PATH  Adds a layer to the start of the fs, may be a path to a folder or .upkf/.vpk file" );
+				println!( "\tlist              list all available layers" );
+				println!( "\treverse           reverse the order of the layer list" );
+			}
+			// [ "list" ] => println!( "Layer in pos {}: {}", fs.layers.as_slice().index_of( layer ), layer.meta().filename ),
+			[ "reverse" ] => {
+				fs.layers.reverse();
+				println!("Layer list successfully reversed.")
+			}
+			[ action @ ( "append" | "prepend" ), rawPath ] => {
+				let path = Path::new(rawPath).canonicalize().unwrap();
 
-		if path.is_dir() {
-			// folder
-			fs.add_layer( Box::new( FolderLayer::from_buf( path.clone() ) ), prepend );
-			println!( "{}", success_message )
-		} else {
-			match path.extension() {
-				None => eprintln!( "ERROR: If adding a file, please make sure it has a valid extension." ),
-				Some( ext ) => {
-					match ext.to_str().unwrap() {
-						// upkf file
-						"upkf" => fs.add_layer( Box::new( UpkfLayer::from_buf( path.canonicalize().unwrap() ) ), prepend ),
-						// vpk file
-						"vpk" => fs.add_layer( Box::new( VpkLayer::from_buf( path.canonicalize().unwrap() ) ), prepend ),
-						ext => {
-							println!( "ERROR: Unsupported file type: {}", ext );
-							return;
+				if path.is_dir() { // folder
+					fs.add_layer( Box::new( FolderLayer::from_buf( path.clone() ) ), action == &"prepend" );
+				} else { // file
+					match path.extension() {
+						None => eprintln!("ERROR: If adding a file, please make sure it has a valid extension."),
+						Some( ext ) => {
+							match ext.to_str().unwrap() {
+								// upkf file
+								"upkf" => fs.add_layer( Box::new( UpkfLayer::from_buf( path.clone() ) ), action == &"prepend" ),
+								// vpk file
+								"vpk" => fs.add_layer( Box::new( VpkLayer::from_buf( path.clone() ) ), action == &"prepend" ),
+								ext => {
+									eprintln!( "ERROR: Unsupported file type: {ext}" );
+									return;
+								}
+							}
 						}
 					}
-					println!( "{}", success_message )
 				}
+				println!( "{action}ded {:?} as new layer", path )
 			}
+			_ => eprintln!( "usage: layer ( help | list | reverse | ( append | prepend ) $PATH )" )
 		}
 	}
 
-	fn parseHandler( fs: &mut LayeredFS, args: &[&str]) {
-		// parse [ --help | [ --detect | --tokenize | --lex | --ugly ] file ]
-		type Handler<'a> = &'a impl Fn(&str, &str) -> dyn Display;
+	fn parseHandler( fs: &mut LayeredFS, mut args: Vec<&str> ) {
+		type Handler<'a> = &'a dyn Fn(&str, &str) -> Box<dyn Debug>;
+		let mut handlers = HashMap::<&str, Handler>::new();
 
-		let process = | path, stage, handlers: HashMap<&str, Handler> | match fs.get_file(path) {
+		let mut process = |path: &str, stage: &str, handlers: HashMap<&str, Handler>| match fs.get_file(path) {
 			Err(kind) => eprintln!("parse: failed to load file \"{}\": {}", path, kind),
 			Ok(layeredFile) => match layeredFile.read_string() {
 				Err(kind) => eprintln!("parse: failed to read file \"{}\": {}", path, kind),
 				Ok(contents) => {
-					let ext =  Path::new(path).extension().unwrap_or("".as_ref() ).to_str().unwrap();
-					match handlers.get( ext ) {
-						Some( handler ) => println!( "{:?}", handler( contents.as_str(), path ).to_string() ),
-						None => eprintln!( "parse: Cannot {stage} file: Unknown file type '{ext}'" )
+					let ext = Path::new(path).extension().unwrap_or("".as_ref()).to_str().unwrap();
+					match handlers.get(ext) {
+						None => eprintln!("parse: Cannot {stage} file: Unknown file type '{ext}'"),
+						Some(handler) => println!("{:?}", (handler.call((contents.as_str(), path)) as Box<dyn Debug>))
 					}
 				}
 			}
 		};
 
-		let mut map = HashMap::<&str, Handler>::new();
+		args.remove(0); // remove "parse" prefix
 		match args.as_slice() {
 			[ "--help" ] => {
 				println!( "Parsing command line utility v1" );
@@ -158,16 +168,16 @@ pub fn main() {
 				}
 			),
 			[ "--tokenize", path ] => {
-				map.insert( "e", &| path, data | e::tokenize( data, path ) );
-				process( path, "tokenize", map )
+				handlers.insert("e", &|path, data | Box::new( e::tokenize(data, path ) ) );
+				process( path, "tokenize", handlers )
 			},
 			[ "--lex", path ] => {
-				map.insert( "e", &| path, data | e::lex(e::tokenize( data, path ) ) );
-				process( path, "lex", map )
+				handlers.insert("e", &|path, data | Box::new( e::lex(e::tokenize(data, path ) ) ) );
+				process( path, "lex", handlers )
 			},
 			[ "--ugly", path ] | [ path ] => {
-				map.insert( "e", &| path, data | e::loads( data, path ) );
-				process( path, "parse", map )
+				handlers.insert("e", &|path, data | Box::new( e::loads(data, path ) ) );
+				process( path, "parse", handlers )
 			},
 			_ => eprintln!( "usage: parse [ --help | [ --detect | --tokenize | --lex | --ugly ] file ]" ),
 		}

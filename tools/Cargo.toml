@@ -16,6 +16,10 @@
     name = 'fscli'
     path = 'src/filesystem/fscli.rs'
 
+[[bin]]
+    name = 'findjava'
+    path = 'src/findjava.rs'
+
 [dependencies]
     filesystem = { path = '../filesystem' }
     tier0 = { path = '../tier0' }
