@@ -1,22 +1,32 @@
 use std::fs::File;
 use std::io::{Error, ErrorKind, Read, Seek, SeekFrom};
 use std::path::PathBuf;
+use std::rc::Rc;
 use std::sync::Arc;
+
 use path_slash::PathBufExt;
+use uuid::Uuid;
 use vpk::entry::VPKEntry;
 use vpk::VPK;
-use crate::layered::{ILayeredFile, Layer, LayeredFile, LayerMeta};
+
+use tier0::types::HeapPtr;
+
+use crate::layered::{ILayeredFile, Layer, LayeredFile, LayeredFS, LayerMeta};
 
 pub struct VpkLayer {
 	path: PathBuf,
-	vpk: VPK
+	vpk: VPK,
+	fs: Option<Arc<Rc<LayeredFS>>>,
+	uuid: Uuid,
 }
 
 impl VpkLayer {
 	pub fn from_buf( path: PathBuf ) -> Self {
 		VpkLayer {
 			path: path.clone(),
-			vpk: vpk::from_path( path.as_path().to_str().unwrap() ).unwrap()
+			vpk: vpk::from_path( path.as_path().to_str().unwrap() ).unwrap(),
+			fs: None,
+			uuid: Uuid::new_v4()
 		}
 	}
 }
@@ -38,7 +48,7 @@ impl Layer for VpkLayer {
 				return Ok( Box::new( VpkLayeredFile {
 					path: self.path.to_str().unwrap().to_string(),
 					entry: Arc::new( &entry ),
-					layer: self
+					layer: self.fs?.get_layer_reference( &self )
 				}))
 			}
 		}
@@ -52,13 +62,17 @@ impl Layer for VpkLayer {
 			size: Some( File::open( &self.path ).unwrap().metadata().unwrap().len() )
 		}
 	}
+
+	fn uuid(&self) -> &Uuid {
+		&self.uuid
+	}
 }
 
 
 struct VpkLayeredFile<'a> {
 	path: String,
 	entry: Arc<&'a VPKEntry>,
-	layer: HeapPtr<VpkLayer>
+	layer: Uuid
 }
 
 impl ILayeredFile for VpkLayeredFile<'_> {
@@ -83,6 +97,6 @@ impl ILayeredFile for VpkLayeredFile<'_> {
 	}
 
 	fn layer(&self) -> HeapPtr<dyn Layer> {
-		self.layer
+		self.fs.get_layer_reference( self.layer )
 	}
 }

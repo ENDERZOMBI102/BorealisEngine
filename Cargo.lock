@@ -168,9 +168,9 @@ checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
 
 [[package]]
 name = "bin-layout"
-version = "5.1.0"
+version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0eff45bb6683c26978fdc2b44329810e505dcd29b240aa573c6cdcd34cd580c1"
+checksum = "2108ea53f8b66136b46676066c6be9db3c7e4316bc330374c2e046a52dc191ba"
 dependencies = [
  "bin-layout-derive",
  "stack-array",
@@ -179,9 +179,9 @@ dependencies = [
 
 [[package]]
 name = "bin-layout-derive"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c33970b38870bb997bf9d174d53c5f161c3e18c95422058c6497b37d074f7de9"
+checksum = "800c718c779c2540d2ff71d239b617184df10ff09e8a9147c7504087bd5947cd"
 dependencies = [
  "quote",
  "syn",
@@ -717,7 +717,7 @@ dependencies = [
  "serde",
  "serde_derive",
  "serde_json",
- "uuid",
+ "uuid 0.8.2",
  "windows-named-pipe",
 ]
 
@@ -776,6 +776,8 @@ dependencies = [
  "path-slash",
  "savefile",
  "sha256",
+ "tier0",
+ "uuid 1.2.1",
  "vpk",
 ]
 
@@ -1501,9 +1503,9 @@ checksum = "b1de2e551fb905ac83f73f7aedf2f0cb4a0da7e35efa24a202a936269f1f18e1"
 
 [[package]]
 name = "path-slash"
-version = "0.1.4"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3cacbb3c4ff353b534a67fb8d7524d00229da4cb1dc8c79f4db96e375ab5b619"
+checksum = "1e91099d4268b0e11973f036e885d652fb0b21fedcf69738c627f94db6a44f42"
 
 [[package]]
 name = "percent-encoding"
@@ -2118,6 +2120,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bc5cf98d8186244414c848017f0e2676b3fcb46807f6668a97dfe67359a3c4b7"
 dependencies = [
  "getrandom",
+]
+
+[[package]]
+name = "uuid"
+version = "1.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "feb41e78f93363bb2df8b0e86a2ca30eed7806ea16ea0c790d757cf93f79be83"
+dependencies = [
+ "getrandom",
+ "rand",
+ "uuid-macro-internal",
+]
+
+[[package]]
+name = "uuid-macro-internal"
+version = "1.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "44cc305b0c375fa2f078537bbe564516cb1946c1defa4041aa0e3f9cd5e07c4a"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

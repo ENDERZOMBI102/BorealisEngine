@@ -1,7 +1,11 @@
 pub mod layers;
 
-use std::io::{Error, ErrorKind, Read, Seek};
+use tier0::types::HeapPtr;
+use std::io::{Error, ErrorKind};
 use std::path::PathBuf;
+use std::rc::Rc;
+use std::sync::Arc;
+use uuid::Uuid;
 
 pub type LayeredFile = Box<dyn ILayeredFile>;
 
@@ -23,10 +27,11 @@ pub trait Layer {
 	fn contains( &self, filename: &str ) -> bool;
 	fn get_file( &self, filename: &str ) -> Result< LayeredFile, ErrorKind >;
 	fn meta( &self ) -> LayerMeta;
+	fn uuid( &self ) -> &Uuid;
 }
 
 pub struct LayeredFS {
-	pub layers: Vec< Box< dyn Layer > >
+	pub layers: Vec< HeapPtr< dyn Layer > >
 }
 
 impl LayeredFS {
@@ -59,10 +64,14 @@ impl LayeredFS {
 
 	pub fn add_layer( &mut self, layer: Box<dyn Layer>, prepend: bool ) {
 		if prepend {
-			self.layers.insert( 0, layer )
+			self.layers.insert( 0, Arc::new( Rc::new( layer ) ) )
 		} else {
-			self.layers.push(layer)
+			self.layers.push( Arc::new( Rc::new( layer ) ) )
 		}
+	}
+
+	pub(crate) fn get_layer_reference( layer: &Uuid ) -> HeapPtr<dyn Layer> {
+
 	}
 
 	pub fn layer_count( &self ) -> usize {

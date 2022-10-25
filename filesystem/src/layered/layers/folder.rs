@@ -1,7 +1,7 @@
 use std::fs::File;
-use std::io::{Error, ErrorKind};
+use std::io::{Error, ErrorKind, Read};
 use std::path::{Path, PathBuf};
-
+use tier0::types::HeapPtr;
 use crate::layered::{ILayeredFile, Layer, LayeredFile, LayerMeta};
 
 pub struct FolderLayer {
@@ -58,11 +58,11 @@ struct FolderLayeredFile {
 
 impl ILayeredFile for FolderLayeredFile {
 	fn size(&self) -> u64 {
-		file.metadata().unwrap().len()
+		self.file.metadata().unwrap().len()
 	}
 
 	fn read(&self) -> Result<Vec<u8>, Error> {
-		let mut file2 = file.clone();
+		let mut file2 = self.file.try_clone()?;
 		let mut vec: Vec<u8> = Vec::new();
 		file2.read_to_end( &mut vec )?;
 		Ok( vec )
@@ -70,7 +70,7 @@ impl ILayeredFile for FolderLayeredFile {
 
 	fn read_string(&self) -> Result<String, Error> {
 		let mut string = String::new();
-		file.try_clone().unwrap().read_to_string( &mut string )?;
+		self.file.try_clone().unwrap().read_to_string( &mut string )?;
 		Ok( string )
 	}
 

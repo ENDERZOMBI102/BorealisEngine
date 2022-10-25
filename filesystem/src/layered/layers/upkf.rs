@@ -5,6 +5,7 @@ use std::sync::Arc;
 use path_slash::PathBufExt;
 use crate::layered::{ILayeredFile, Layer, LayeredFile, LayerMeta};
 use crate::upkf::{Element, Upkf};
+use tier0::types::{heap_ptr, HeapPtr};
 
 pub struct UpkfLayer {
 	upkf: Upkf
@@ -37,7 +38,7 @@ impl Layer for UpkfLayer {
 	fn get_file( &self, filename: &str ) -> Result<LayeredFile, ErrorKind> {
 		for element in self.upkf.iter() {
 			if element.get_path() == filename {
-				return Ok( Box::new( UpkfLayeredFile { element: Arc::new( &element ), layer: self } ) )
+				return Ok( Box::new( UpkfLayeredFile { element: Arc::new( &element ), layer: heap_ptr(self) } ) )
 			}
 		}
 		Err( ErrorKind::NotFound )
@@ -60,15 +61,15 @@ struct UpkfLayeredFile<'a> {
 
 impl ILayeredFile for UpkfLayeredFile<'_> {
 	fn size(&self) -> u64 {
-		element.get_content().len() as u64
+		self.element.get_content().len() as u64
 	}
 
 	fn read(&self) -> Result<Vec<u8>, Error> {
-		Ok( element.get_content().clone().to_vec() )
+		Ok( self.element.get_content().clone().to_vec() )
 	}
 
 	fn read_string(&self) -> Result<String, Error> {
-		match String::from_utf8( element.get_content().clone().to_vec() ) {
+		match String::from_utf8( self.element.get_content().clone().to_vec() ) {
 			Ok( string ) => Ok( string ),
 			Err( err ) => Err( Error::new( ErrorKind::InvalidData, err ) )
 		}
