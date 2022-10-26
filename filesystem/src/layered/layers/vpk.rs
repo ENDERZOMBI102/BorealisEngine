@@ -42,7 +42,7 @@ impl VpkLayer<'_> {
 	}
 }
 
-impl Layer for VpkLayer<'_> {
+impl<'a> Layer for VpkLayer<'a> {
 	fn resolve( &self, filename: &str ) -> PathBuf {
 		let mut path = PathBuf::from( String::from( self.path.to_str().unwrap() ) + "!" );
 		path.push( filename );
@@ -53,7 +53,7 @@ impl Layer for VpkLayer<'_> {
 		self.vpk.tree.contains_key( filename )
 	}
 
-	fn get_file<'a>( &'a self, filename: &str ) -> Result<LayeredFile<'a>, Error> {
+	fn get_file(&self, filename: &str) -> Result<LayeredFile<'a>, Error> {
 		for ( name, entry ) in self.vpk.tree.iter() {
 			if name == filename {
 				return Ok( Box::new( VpkLayeredFile {
