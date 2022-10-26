@@ -3,23 +3,41 @@ use std::io::{Error, ErrorKind};
 use std::path::PathBuf;
 use std::sync::Arc;
 use path_slash::PathBufExt;
-use crate::layered::{ILayeredFile, Layer, LayeredFile, LayerMeta};
+use crate::layered::*;
 use crate::upkf::{Element, Upkf};
-use tier0::types::{heap_ptr, HeapPtr};
 
-pub struct UpkfLayer {
-	upkf: Upkf
+pub struct UpkfLayerProvider { }
+impl LayerProvider for UpkfLayerProvider {
+	fn supports( &self, path: &PathBuf) -> bool {
+		if let Some( ext ) = path.extension() {
+			return ext.to_str().unwrap() == "upkf" && path.exists();
+		}
+		false
+	}
+
+	fn create( &self, path: &PathBuf, fs: &LayeredFS) -> Result<Arc<dyn Layer>, LayeredFSError> {
+		Ok( Arc::new( UpkfLayer::new( path, fs ) ) )
+	}
 }
 
-impl UpkfLayer {
-	pub fn from_buf( path: PathBuf ) -> Self {
+
+pub struct UpkfLayer<'a> {
+	upkf: Upkf,
+	fs: &'a LayeredFS,
+	uuid: Uuid
+}
+
+impl UpkfLayer<'_> {
+	pub fn new( path: &PathBuf, fs: &LayeredFS ) -> Self {
 		UpkfLayer {
-			upkf: Upkf::load( path.as_path(), true ).unwrap()
+			upkf: Upkf::load( path.as_path(), true ).unwrap(),
+			uuid: Uuid::new_v4(),
+			fs: fs,
 		}
 	}
 }
 
-impl Layer for UpkfLayer {
+impl Layer for UpkfLayer<'_> {
 	fn resolve( &self, filename: &str ) -> PathBuf {
 		let mut path = PathBuf::from( String::from( self.upkf.get_path().unwrap().to_str().unwrap() ) + "!" );
 		path.push( filename );
@@ -35,13 +53,13 @@ impl Layer for UpkfLayer {
 		false
 	}
 
-	fn get_file( &self, filename: &str ) -> Result<LayeredFile, ErrorKind> {
+	fn get_file( &self, filename: &str ) -> Result<LayeredFile, Error> {
 		for element in self.upkf.iter() {
 			if element.get_path() == filename {
-				return Ok( Box::new( UpkfLayeredFile { element: Arc::new( &element ), layer: heap_ptr(self) } ) )
+				return Ok( Box::new( UpkfLayeredFile { element: Arc::new( &element ), layer: self.fs.get_layer_reference( &self.uuid ).unwrap() } ) )
 			}
 		}
-		Err( ErrorKind::NotFound )
+		Err( Error::new(ErrorKind::NotFound, format!("File {filename} was not found") ) )
 	}
 
 	fn meta( &self ) -> LayerMeta {
@@ -51,12 +69,16 @@ impl Layer for UpkfLayer {
 			size: Some( File::open( self.upkf.get_path().unwrap() ).unwrap().metadata().unwrap().len() )
 		}
 	}
+
+	fn uuid(&self) -> &Uuid {
+		&self.uuid
+	}
 }
 
 
 struct UpkfLayeredFile<'a> {
 	element: Arc<&'a Element>,
-	layer: HeapPtr<UpkfLayer>
+	layer: Arc<dyn Layer>
 }
 
 impl ILayeredFile for UpkfLayeredFile<'_> {
@@ -75,7 +97,11 @@ impl ILayeredFile for UpkfLayeredFile<'_> {
 		}
 	}
 
-	fn layer(&self) -> HeapPtr<dyn Layer> {
-		self.layer
+	fn layer(&self) -> Arc<dyn Layer> {
+		self.layer.clone()
+	}
+
+	fn path(&self) -> String {
+		self.element.get_path().to_string()
 	}
 }

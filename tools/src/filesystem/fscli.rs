@@ -1,25 +1,19 @@
-#![feature(string_remove_matches)]
 #![feature(slice_pattern)]
 #![allow(non_snake_case)]
-#![feature(type_alias_impl_trait)]
-#![feature(fn_traits)]
+#![feature(string_remove_matches)]
 
 use core::slice::SlicePattern;
 use std::collections::HashMap;
 use std::fmt::{Debug, Display};
-use std::io::{ErrorKind, Write};
+use std::io::Write;
 use std::path::Path;
 
-use filesystem::layered::{LayeredFile, LayeredFS};
-use filesystem::layered::layers::{FolderLayer, UpkfLayer, VpkLayer};
+use filesystem::layered::{LayeredFS, LayeredFSError};
 use tier0::format::e;
 
 pub fn main() {
-	let mut fs = LayeredFS {
-		layers: vec![
-			Box::new( FolderLayer::from_buf( std::env::current_dir().unwrap() ) )
-		]
-	};
+	let mut fs = LayeredFS::new();
+	fs.add_layer( std::env::current_dir().unwrap(), false ).expect("Failed to add current dir as layer.");
 
 	println!( "FileSystem CLI v1.2" );
 
@@ -35,8 +29,8 @@ pub fn main() {
 				match command[0] {
 					"has" => match command.as_slice() {
 						[ "has", path ] => {
-							match fs.get_file() {
-								Ok( file ) => println!( "File `{}` found in layer {}", file ),
+							match fs.get_file( path ) {
+								Ok( file ) => println!( "File `{}` found in layer {}", file.path(), file.layer().meta().filename ),
 								Err(_) => {}
 							}
 						},
@@ -100,27 +94,16 @@ pub fn main() {
 				println!("Layer list successfully reversed.")
 			}
 			[ action @ ( "append" | "prepend" ), rawPath ] => {
-				let path = Path::new(rawPath).canonicalize().unwrap();
+				let path = Path::new(rawPath).canonicalize()?;
 
-				if path.is_dir() { // folder
-					fs.add_layer( Box::new( FolderLayer::from_buf( path.clone() ) ), action == &"prepend" );
-				} else { // file
-					match path.extension() {
-						None => eprintln!("ERROR: If adding a file, please make sure it has a valid extension."),
-						Some( ext ) => {
-							match ext.to_str().unwrap() {
-								// upkf file
-								"upkf" => fs.add_layer( Box::new( UpkfLayer::from_buf( path.clone() ) ), action == &"prepend" ),
-								// vpk file
-								"vpk" => fs.add_layer( Box::new( VpkLayer::from_buf( path.clone() ) ), action == &"prepend" ),
-								ext => {
-									eprintln!( "ERROR: Unsupported file type: {ext}" );
-									return;
-								}
-							}
-						}
+				if let Err(err) = fs.try_add_layer( path, "prepend" == action ) {
+					match err {
+						LayeredFSError::NoExtension => eprintln!("ERROR: If adding a file, please make sure it has a valid extension."),
+						LayeredFSError::Unsupported(ext) => eprintln!( "ERROR: Unsupported file type: {ext}" )
 					}
+					return;
 				}
+
 				println!( "{action}ded {:?} as new layer", path )
 			}
 			_ => eprintln!( "usage: layer ( help | list | reverse | ( append | prepend ) $PATH )" )

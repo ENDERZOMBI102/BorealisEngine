@@ -1,28 +1,35 @@
 use std::fs::File;
-use std::io::{Error, ErrorKind, Read};
-use std::path::{Path, PathBuf};
-use tier0::types::HeapPtr;
-use crate::layered::{ILayeredFile, Layer, LayeredFile, LayerMeta};
+use std::io::{Error, Read};
+use std::path::PathBuf;
 
-pub struct FolderLayer {
-	path: PathBuf
-}
+use uuid::Uuid;
 
-impl FolderLayer {
-	pub fn from_path( folder: &Path ) -> Self {
-		FolderLayer {
-			path: folder.clone().to_path_buf()
-		}
+use crate::layered::*;
+
+pub struct FolderLayerProvider { }
+impl LayerProvider for FolderLayerProvider {
+	fn supports( &self, path: &PathBuf ) -> bool {
+		path.is_dir()
 	}
 
-	pub fn from_buf( folder: PathBuf ) -> Self {
-		FolderLayer {
-			path: folder.clone()
-		}
+	fn create( &self, path: &PathBuf, fs: &LayeredFS) -> Result<Arc<dyn Layer>, LayeredFSError> {
+		Ok( Arc::new( FolderLayer::new( path, fs ) ) )
 	}
 }
 
-impl Layer for FolderLayer {
+pub struct FolderLayer<'a> {
+	path: PathBuf,
+	fs: &'a LayeredFS,
+	uuid: Uuid
+}
+
+impl FolderLayer<'_> {
+	pub(crate) fn new(og: &PathBuf, fs: &LayeredFS ) -> Self {
+		FolderLayer { path: og.clone(), uuid: Uuid::new_v4(), fs: fs }
+	}
+}
+
+impl Layer for FolderLayer<'_> {
 	fn resolve( &self, filename: &str ) -> PathBuf {
 		let mut path = self.path.clone();
 		path.push( filename );
@@ -33,12 +40,9 @@ impl Layer for FolderLayer {
 		self.resolve( filename ).exists()
 	}
 
-	fn get_file( &self, filename: &str ) -> Result<LayeredFile, ErrorKind> {
-		let file = File::open( self.resolve( filename ) );
-		if file.is_ok() {
-			return Ok( Box::new( FolderLayeredFile { file: file.unwrap(), layer: &self } ) )
-		}
-		Err( ErrorKind::Other )
+	fn get_file( &self, filename: &str ) -> Result<LayeredFile, Error> {
+		let file = File::open( self.resolve( filename ) )?;
+		Ok( Box::new( FolderLayeredFile { file: file, path: filename.to_string(), layer: self.fs.get_layer_reference( &self.uuid ).unwrap() } ) )
 	}
 
 	fn meta( &self ) -> LayerMeta {
@@ -48,12 +52,17 @@ impl Layer for FolderLayer {
 			size: None
 		}
 	}
+
+	fn uuid( &self ) -> &Uuid {
+		&self.uuid
+	}
 }
 
 
 struct FolderLayeredFile {
 	file: File,
-	layer: HeapPtr<FolderLayer>
+	path: String,
+	layer: Arc<dyn Layer>
 }
 
 impl ILayeredFile for FolderLayeredFile {
@@ -74,7 +83,11 @@ impl ILayeredFile for FolderLayeredFile {
 		Ok( string )
 	}
 
-	fn layer(&self) -> HeapPtr<dyn Layer> {
-		self.layer
+	fn layer(&self) -> Arc<dyn Layer> {
+		self.layer.clone()
+	}
+
+	fn path(&self) -> String {
+		self.path.clone()
 	}
 }

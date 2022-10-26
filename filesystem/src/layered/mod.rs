@@ -1,19 +1,33 @@
-pub mod layers;
-
-use tier0::types::HeapPtr;
 use std::io::{Error, ErrorKind};
 use std::path::PathBuf;
-use std::rc::Rc;
 use std::sync::Arc;
+
 use uuid::Uuid;
+
+use crate::layered::layers::folder::FolderLayerProvider;
+use crate::layered::layers::upkf::UpkfLayerProvider;
+use crate::layered::layers::vpk::VpkLayerProvider;
+
+pub mod layers;
 
 pub type LayeredFile = Box<dyn ILayeredFile>;
 
-trait ILayeredFile {
+pub enum LayeredFSError {
+	NoExtension,
+	Unsupported(String)
+}
+
+pub trait LayerProvider: Sync + Send {
+	fn supports( &self, path: &PathBuf ) -> bool;
+	fn create( &self, path: &PathBuf, fs: &LayeredFS ) -> Result<Arc<dyn Layer>, LayeredFSError>;
+}
+
+pub trait ILayeredFile {
 	fn size( &self ) -> u64;
 	fn read( &self ) -> Result<Vec<u8>, Error>;
 	fn read_string( &self ) -> Result<String, Error>;
-	fn layer( &self ) -> HeapPtr<dyn Layer>;
+	fn layer( &self ) -> Arc<dyn Layer>;
+	fn path( &self ) -> String;
 }
 
 pub struct LayerMeta {
@@ -25,16 +39,28 @@ pub struct LayerMeta {
 pub trait Layer {
 	fn resolve( &self, filename: &str ) -> PathBuf;
 	fn contains( &self, filename: &str ) -> bool;
-	fn get_file( &self, filename: &str ) -> Result< LayeredFile, ErrorKind >;
+	fn get_file( &self, filename: &str ) -> Result< LayeredFile, Error >;
 	fn meta( &self ) -> LayerMeta;
 	fn uuid( &self ) -> &Uuid;
 }
 
 pub struct LayeredFS {
-	pub layers: Vec< HeapPtr< dyn Layer > >
+	providers: Vec< Box<dyn LayerProvider> >,
+	pub layers: Vec< Arc< dyn Layer > >
 }
 
 impl LayeredFS {
+	pub fn new() -> Self {
+		LayeredFS {
+			providers: vec![
+				Box::new( FolderLayerProvider { } ),
+				Box::new( UpkfLayerProvider { } ),
+				Box::new( VpkLayerProvider { } )
+			],
+			layers: Vec::new()
+		}
+	}
+
 	pub fn contains( &self, filename: &str ) -> bool {
 		for layer in &self.layers {
 			if layer.contains( filename ) {
@@ -44,13 +70,13 @@ impl LayeredFS {
 		false
 	}
 
-	pub fn get_file( &self, filename: &str ) -> Result<LayeredFile, ErrorKind> {
+	pub fn get_file( &self, filename: &str ) -> Result<LayeredFile, Error> {
 		for layer in &self.layers {
 			if layer.contains( filename ) {
 				return layer.get_file( filename );
 			}
 		}
-		Err( ErrorKind::NotFound )
+		Err( Error::new(ErrorKind::NotFound, format!("File {filename} was not found") ) )
 	}
 
 	pub fn resolve( &self, filename: &str ) -> Option<PathBuf> {
@@ -62,16 +88,35 @@ impl LayeredFS {
 		None
 	}
 
-	pub fn add_layer( &mut self, layer: Box<dyn Layer>, prepend: bool ) {
-		if prepend {
-			self.layers.insert( 0, Arc::new( Rc::new( layer ) ) )
-		} else {
-			self.layers.push( Arc::new( Rc::new( layer ) ) )
+	pub fn add_layer( &mut self, path: PathBuf, prepend: bool ) -> Result<(), LayeredFSError> {
+		for provider in &self.providers {
+			if provider.supports( &path ) {
+				let layer = provider.create( &path, &self )?;
+				if prepend {
+					self.layers.insert( 0, layer )
+				} else {
+					self.layers.push( layer )
+				}
+				return Ok(())
+			}
+		}
+		match path.extension() {
+			None => Err( LayeredFSError::NoExtension ),
+			Some( ext ) => Err( LayeredFSError::Unsupported { 0: ext.to_str().unwrap().to_string() } )
 		}
 	}
 
-	pub(crate) fn get_layer_reference( layer: &Uuid ) -> HeapPtr<dyn Layer> {
+	pub fn add_layer_provider( &mut self, provider: Box<dyn LayerProvider> ) {
+		self.providers.push( provider )
+	}
 
+	pub(crate) fn get_layer_reference(&self, uuid: &Uuid ) -> Option<Arc<dyn Layer>> {
+		for layer in &self.layers {
+			if layer.uuid() == uuid {
+				return Some(layer.clone())
+			}
+		}
+		None
 	}
 
 	pub fn layer_count( &self ) -> usize {

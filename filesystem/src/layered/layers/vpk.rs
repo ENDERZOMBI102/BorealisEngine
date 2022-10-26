@@ -1,7 +1,6 @@
 use std::fs::File;
 use std::io::{Error, ErrorKind, Read, Seek, SeekFrom};
 use std::path::PathBuf;
-use std::rc::Rc;
 use std::sync::Arc;
 
 use path_slash::PathBufExt;
@@ -9,29 +8,41 @@ use uuid::Uuid;
 use vpk::entry::VPKEntry;
 use vpk::VPK;
 
-use tier0::types::HeapPtr;
+use crate::layered::*;
 
-use crate::layered::{ILayeredFile, Layer, LayeredFile, LayeredFS, LayerMeta};
+pub struct VpkLayerProvider { }
+impl LayerProvider for VpkLayerProvider {
+	fn supports( &self, path: &PathBuf) -> bool {
+		if let Some( ext ) = path.extension() {
+			return ext.to_str().unwrap() == "vpk" && path.exists();
+		}
+		false
+	}
 
-pub struct VpkLayer {
+	fn create( &self, path: &PathBuf, fs: &LayeredFS ) -> Result<Arc<dyn Layer>, LayeredFSError> {
+		Ok( Arc::new( VpkLayer::new( path, fs ) ) )
+	}
+}
+
+pub struct VpkLayer<'a> {
 	path: PathBuf,
 	vpk: VPK,
-	fs: Option<Arc<Rc<LayeredFS>>>,
+	fs: &'a LayeredFS,
 	uuid: Uuid,
 }
 
-impl VpkLayer {
-	pub fn from_buf( path: PathBuf ) -> Self {
+impl VpkLayer<'_> {
+	pub fn new(path: &PathBuf, fs: &LayeredFS, ) -> Self {
 		VpkLayer {
 			path: path.clone(),
 			vpk: vpk::from_path( path.as_path().to_str().unwrap() ).unwrap(),
-			fs: None,
+			fs: fs,
 			uuid: Uuid::new_v4()
 		}
 	}
 }
 
-impl Layer for VpkLayer {
+impl Layer for VpkLayer<'_> {
 	fn resolve( &self, filename: &str ) -> PathBuf {
 		let mut path = PathBuf::from( String::from( self.path.to_str().unwrap() ) + "!" );
 		path.push( filename );
@@ -42,17 +53,17 @@ impl Layer for VpkLayer {
 		self.vpk.tree.contains_key( filename )
 	}
 
-	fn get_file( &self, filename: &str ) -> Result<LayeredFile, ErrorKind> {
+	fn get_file( &self, filename: &str ) -> Result<LayeredFile, Error> {
 		for ( name, entry ) in self.vpk.tree.iter() {
 			if name == filename {
 				return Ok( Box::new( VpkLayeredFile {
 					path: self.path.to_str().unwrap().to_string(),
 					entry: Arc::new( &entry ),
-					layer: self.fs?.get_layer_reference( &self )
+					layer: self.fs.get_layer_reference( &self.uuid ).unwrap()
 				}))
 			}
 		}
-		Err( ErrorKind::NotFound )
+		Err( Error::new(ErrorKind::NotFound, format!("File {filename} was not found") ) )
 	}
 
 	fn meta( &self ) -> LayerMeta {
@@ -72,7 +83,7 @@ impl Layer for VpkLayer {
 struct VpkLayeredFile<'a> {
 	path: String,
 	entry: Arc<&'a VPKEntry>,
-	layer: Uuid
+	layer: Arc<dyn Layer>
 }
 
 impl ILayeredFile for VpkLayeredFile<'_> {
@@ -96,7 +107,11 @@ impl ILayeredFile for VpkLayeredFile<'_> {
 		Ok( string )
 	}
 
-	fn layer(&self) -> HeapPtr<dyn Layer> {
-		self.fs.get_layer_reference( self.layer )
+	fn layer(&self) -> Arc<dyn Layer> {
+		self.layer.clone()
+	}
+
+	fn path(&self) -> String {
+		self.path.clone()
 	}
 }
