@@ -149,12 +149,12 @@ impl Upkf {
 		}
 	}
 
-	pub fn load( path: &Path, check_content: bool ) -> Result<Self, UpkfError> {
+	pub fn load( path: &PathBuf, check_content: bool ) -> Result<Self, UpkfError> {
 		let mut file = File::open( path )?;
 		let header = FileHeader::load( &mut file )?;
 		let mut upkf = Self {
 			origin: header.origin,
-			path: Some( path.to_path_buf() ),
+			path: Some( path.clone() ),
 			entries: vec![]
 		};
 

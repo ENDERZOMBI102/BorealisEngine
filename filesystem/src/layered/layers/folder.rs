@@ -12,7 +12,7 @@ impl LayerProvider for FolderLayerProvider {
 		path.is_dir()
 	}
 
-	fn create<'a>(&self, path: &PathBuf, fs: Rc<&'a LayeredFS>) -> Result<Arc<dyn Layer>, LayeredFSError> {
+	fn create<'a>(&self, path: PathBuf, fs: Rc<&'a LayeredFS>) -> Result<Arc<dyn Layer + 'a>, LayeredFSError> {
 		Ok( Arc::new( FolderLayer::new( path, fs ) ) )
 	}
 }
@@ -24,12 +24,12 @@ pub struct FolderLayer<'a> {
 }
 
 impl FolderLayer<'_> {
-	pub(crate) fn new<'a>(og: &PathBuf, fs: Rc<&'a LayeredFS> ) -> FolderLayer<'a> {
-		FolderLayer { path: og.clone(), uuid: Uuid::new_v4(), fs: fs }
+	pub(crate) fn new<'a>( path: PathBuf, fs: Rc<&'a LayeredFS> ) -> FolderLayer<'a> {
+		FolderLayer { path, uuid: Uuid::new_v4(), fs: fs }
 	}
 }
 
-impl Layer for FolderLayer<'_> {
+impl<'a> Layer for FolderLayer<'a> {
 	fn resolve( &self, filename: &str ) -> PathBuf {
 		let mut path = self.path.clone();
 		path.push( filename );
@@ -42,7 +42,11 @@ impl Layer for FolderLayer<'_> {
 
 	fn get_file( &self, filename: &str ) -> Result<LayeredFile, Error> {
 		let file = File::open( self.resolve( filename ) )?;
-		Ok( Box::new( FolderLayeredFile { file: file, path: filename.to_string(), layer: self.fs.get_layer_reference( &self.uuid ).unwrap() } ) )
+		Ok( Box::new( FolderLayeredFile {
+			file: file,
+			path: filename.to_string(),
+			layer: self.fs.get_layer_reference( &self.uuid ).unwrap()
+		}))
 	}
 
 	fn meta( &self ) -> LayerMeta {

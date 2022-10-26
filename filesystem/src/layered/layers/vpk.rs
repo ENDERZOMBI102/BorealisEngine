@@ -19,7 +19,7 @@ impl LayerProvider for VpkLayerProvider {
 		false
 	}
 
-	fn create<'a>(&self, path: &PathBuf, fs: Rc<&'a LayeredFS>) -> Result<Arc<dyn Layer + 'a>, LayeredFSError> {
+	fn create<'a>(&self, path: PathBuf, fs: Rc<&'a LayeredFS>) -> Result<Arc<dyn Layer + 'a>, LayeredFSError> {
 		Ok( Arc::new( VpkLayer::new( path, fs ) ) )
 	}
 }
@@ -32,10 +32,10 @@ pub struct VpkLayer<'a> {
 }
 
 impl VpkLayer<'_> {
-	pub fn new<'a>(path: &PathBuf, fs: Rc<&'a LayeredFS>, ) -> VpkLayer<'a> {
+	pub fn new<'a>( path: PathBuf, fs: Rc<&'a LayeredFS>, ) -> VpkLayer<'a> {
 		VpkLayer {
-			path: path.clone(),
 			vpk: vpk::from_path( path.as_path().to_str().unwrap() ).unwrap(),
+			path: path,
 			fs: fs,
 			uuid: Uuid::new_v4()
 		}
