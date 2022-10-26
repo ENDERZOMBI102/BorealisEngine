@@ -53,10 +53,13 @@ impl Layer for UpkfLayer<'_> {
 		false
 	}
 
-	fn get_file( &self, filename: &str ) -> Result<LayeredFile, Error> {
+	fn get_file<'a>( &'a self, filename: &str ) -> Result<LayeredFile<'a>, Error> {
 		for element in self.upkf.iter() {
 			if element.get_path() == filename {
-				return Ok( Box::new( UpkfLayeredFile { element: Arc::new( &element ), layer: self.fs.get_layer_reference( &self.uuid ).unwrap() } ) )
+				return Ok( Box::new( UpkfLayeredFile {
+					element: Arc::new( &element ),
+					layer: self.fs.get_layer_reference( &self.uuid ).unwrap()
+				} ) )
 			}
 		}
 		Err( Error::new(ErrorKind::NotFound, format!("File {filename} was not found") ) )

@@ -29,7 +29,7 @@ impl FolderLayer<'_> {
 	}
 }
 
-impl<'a> Layer for FolderLayer<'a> {
+impl Layer for FolderLayer<'_> {
 	fn resolve( &self, filename: &str ) -> PathBuf {
 		let mut path = self.path.clone();
 		path.push( filename );
@@ -40,7 +40,7 @@ impl<'a> Layer for FolderLayer<'a> {
 		self.resolve( filename ).exists()
 	}
 
-	fn get_file( &self, filename: &str ) -> Result<LayeredFile, Error> {
+	fn get_file<'a>( &'a self, filename: &str ) -> Result<LayeredFile<'a>, Error> {
 		let file = File::open( self.resolve( filename ) )?;
 		Ok( Box::new( FolderLayeredFile {
 			file: file,

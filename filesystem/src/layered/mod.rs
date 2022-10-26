@@ -11,7 +11,7 @@ use crate::layered::layers::vpk::VpkLayerProvider;
 
 pub mod layers;
 
-pub type LayeredFile = Box<dyn ILayeredFile>;
+pub type LayeredFile<'a> = Box<dyn ILayeredFile + 'a>;
 
 pub enum LayeredFSError {
 	NoExtension,
@@ -37,10 +37,11 @@ pub struct LayerMeta {
 	pub size: Option<u64>
 }
 
+#[allow(clippy::needless_lifetimes)]
 pub trait Layer {
 	fn resolve( &self, filename: &str ) -> PathBuf;
 	fn contains( &self, filename: &str ) -> bool;
-	fn get_file( &self, filename: &str ) -> Result< LayeredFile, Error >;
+	fn get_file<'a>( &'a self, filename: &str ) -> Result<LayeredFile<'a>, Error>;
 	fn meta( &self ) -> LayerMeta;
 	fn uuid( &self ) -> &Uuid;
 }
