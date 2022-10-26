@@ -83,7 +83,7 @@ impl<'a> Layer for VpkLayer<'a> {
 struct VpkLayeredFile<'a> {
 	path: String,
 	entry: Arc<&'a VPKEntry>,
-	layer: Arc<dyn Layer>
+	layer: Arc<dyn Layer + 'a>
 }
 
 impl ILayeredFile for VpkLayeredFile<'_> {
