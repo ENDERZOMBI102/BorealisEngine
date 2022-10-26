@@ -12,7 +12,7 @@ impl LayerProvider for FolderLayerProvider {
 		path.is_dir()
 	}
 
-	fn create( &self, path: &PathBuf, fs: &LayeredFS) -> Result<Arc<dyn Layer>, LayeredFSError> {
+	fn create<'a>(&self, path: &PathBuf, fs: &'a LayeredFS) -> Result<Arc<dyn Layer + 'a>, LayeredFSError> {
 		Ok( Arc::new( FolderLayer::new( path, fs ) ) )
 	}
 }

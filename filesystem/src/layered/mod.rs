@@ -19,7 +19,7 @@ pub enum LayeredFSError {
 
 pub trait LayerProvider: Sync + Send {
 	fn supports( &self, path: &PathBuf ) -> bool;
-	fn create( &self, path: &PathBuf, fs: &LayeredFS ) -> Result<Arc<dyn Layer>, LayeredFSError>;
+	fn create<'a>( &self, path: &PathBuf, fs: &'a LayeredFS ) -> Result<Arc<dyn Layer + 'a>, LayeredFSError>;
 }
 
 pub trait ILayeredFile {
@@ -91,7 +91,7 @@ impl LayeredFS {
 	pub fn add_layer( &mut self, path: PathBuf, prepend: bool ) -> Result<(), LayeredFSError> {
 		for provider in &self.providers {
 			if provider.supports( &path ) {
-				let layer = provider.create( &path, &self )?;
+				let layer = provider.create( &path, self )?;
 				if prepend {
 					self.layers.insert( 0, layer )
 				} else {

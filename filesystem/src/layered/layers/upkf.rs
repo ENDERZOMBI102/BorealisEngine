@@ -15,7 +15,7 @@ impl LayerProvider for UpkfLayerProvider {
 		false
 	}
 
-	fn create( &self, path: &PathBuf, fs: &LayeredFS) -> Result<Arc<dyn Layer>, LayeredFSError> {
+	fn create<'a>(&self, path: &PathBuf, fs: &'a LayeredFS) -> Result<Arc<dyn Layer + 'a>, LayeredFSError> {
 		Ok( Arc::new( UpkfLayer::new( path, fs ) ) )
 	}
 }
