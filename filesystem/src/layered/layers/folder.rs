@@ -12,19 +12,19 @@ impl LayerProvider for FolderLayerProvider {
 		path.is_dir()
 	}
 
-	fn create<'a>(&self, path: &PathBuf, fs: &'a LayeredFS) -> Result<Arc<dyn Layer + 'a>, LayeredFSError> {
+	fn create<'a>(&self, path: &PathBuf, fs: Rc<&'a LayeredFS>) -> Result<Arc<dyn Layer>, LayeredFSError> {
 		Ok( Arc::new( FolderLayer::new( path, fs ) ) )
 	}
 }
 
 pub struct FolderLayer<'a> {
 	path: PathBuf,
-	fs: &'a LayeredFS,
+	fs: Rc<&'a LayeredFS<'a>>,
 	uuid: Uuid
 }
 
 impl FolderLayer<'_> {
-	pub(crate) fn new(og: &PathBuf, fs: &LayeredFS ) -> Self {
+	pub(crate) fn new<'a>(og: &PathBuf, fs: Rc<&'a LayeredFS> ) -> FolderLayer<'a> {
 		FolderLayer { path: og.clone(), uuid: Uuid::new_v4(), fs: fs }
 	}
 }

@@ -1,5 +1,6 @@
 use std::io::{Error, ErrorKind};
 use std::path::PathBuf;
+use std::rc::Rc;
 use std::sync::Arc;
 
 use uuid::Uuid;
@@ -19,7 +20,7 @@ pub enum LayeredFSError {
 
 pub trait LayerProvider: Sync + Send {
 	fn supports( &self, path: &PathBuf ) -> bool;
-	fn create<'a>( &self, path: &PathBuf, fs: &'a LayeredFS ) -> Result<Arc<dyn Layer + 'a>, LayeredFSError>;
+	fn create<'a>( &self, path: &PathBuf, fs: Rc<&'a LayeredFS> ) -> Result<Arc<dyn Layer + 'a>, LayeredFSError>;
 }
 
 pub trait ILayeredFile {
@@ -44,12 +45,12 @@ pub trait Layer {
 	fn uuid( &self ) -> &Uuid;
 }
 
-pub struct LayeredFS {
-	providers: Vec< Box<dyn LayerProvider> >,
-	pub layers: Vec< Arc< dyn Layer > >
+pub struct LayeredFS<'a> {
+	providers: Vec< Box<dyn LayerProvider + 'a> >,
+	pub layers: Vec< Arc< dyn Layer + 'a> >
 }
 
-impl LayeredFS {
+impl<'a> LayeredFS<'a> {
 	pub fn new() -> Self {
 		LayeredFS {
 			providers: vec![
@@ -91,7 +92,7 @@ impl LayeredFS {
 	pub fn add_layer( &mut self, path: PathBuf, prepend: bool ) -> Result<(), LayeredFSError> {
 		for provider in &self.providers {
 			if provider.supports( &path ) {
-				let layer = provider.create( &path, self )?;
+				let layer = provider.create( &path, Rc::new(&self) )?;
 				if prepend {
 					self.layers.insert( 0, layer )
 				} else {
@@ -110,7 +111,7 @@ impl LayeredFS {
 		self.providers.push( provider )
 	}
 
-	pub(crate) fn get_layer_reference(&self, uuid: &Uuid ) -> Option<Arc<dyn Layer>> {
+	pub(crate) fn get_layer_reference(&self, uuid: &Uuid ) -> Option<Arc<dyn Layer + 'a>> {
 		for layer in &self.layers {
 			if layer.uuid() == uuid {
 				return Some(layer.clone())

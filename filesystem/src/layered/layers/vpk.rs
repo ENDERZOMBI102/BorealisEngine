@@ -19,7 +19,7 @@ impl LayerProvider for VpkLayerProvider {
 		false
 	}
 
-	fn create<'a>( &self, path: &PathBuf, fs: &'a LayeredFS ) -> Result<Arc<dyn Layer + 'a>, LayeredFSError> {
+	fn create<'a>(&self, path: &PathBuf, fs: Rc<&'a LayeredFS>) -> Result<Arc<dyn Layer + 'a>, LayeredFSError> {
 		Ok( Arc::new( VpkLayer::new( path, fs ) ) )
 	}
 }
@@ -27,12 +27,12 @@ impl LayerProvider for VpkLayerProvider {
 pub struct VpkLayer<'a> {
 	path: PathBuf,
 	vpk: VPK,
-	fs: &'a LayeredFS,
+	fs: Rc<&'a LayeredFS<'a>>,
 	uuid: Uuid,
 }
 
 impl VpkLayer<'_> {
-	pub fn new<'a>(path: &PathBuf, fs: &'a LayeredFS, ) -> VpkLayer<'a> {
+	pub fn new<'a>(path: &PathBuf, fs: Rc<&'a LayeredFS>, ) -> VpkLayer<'a> {
 		VpkLayer {
 			path: path.clone(),
 			vpk: vpk::from_path( path.as_path().to_str().unwrap() ).unwrap(),
@@ -42,7 +42,7 @@ impl VpkLayer<'_> {
 	}
 }
 
-impl Layer for VpkLayer<'_> {
+impl<'a> Layer for VpkLayer<'a> {
 	fn resolve( &self, filename: &str ) -> PathBuf {
 		let mut path = PathBuf::from( String::from( self.path.to_str().unwrap() ) + "!" );
 		path.push( filename );
@@ -53,7 +53,7 @@ impl Layer for VpkLayer<'_> {
 		self.vpk.tree.contains_key( filename )
 	}
 
-	fn get_file(&self, filename: &str ) -> Result<LayeredFile, Error> {
+	fn get_file( &self, filename: &str ) -> Result<LayeredFile, Error> {
 		for ( name, entry ) in self.vpk.tree.iter() {
 			if name == filename {
 				return Ok( Box::new( VpkLayeredFile {
