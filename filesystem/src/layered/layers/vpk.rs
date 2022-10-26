@@ -31,8 +31,8 @@ pub struct VpkLayer<'a> {
 	uuid: Uuid,
 }
 
-impl VpkLayer<'_> {
-	pub fn new<'a>( path: PathBuf, fs: Rc<&'a LayeredFS>, ) -> VpkLayer<'a> {
+impl<'a> VpkLayer<'a> {
+	pub fn new( path: PathBuf, fs: Rc<&'a LayeredFS>, ) -> VpkLayer<'a> {
 		VpkLayer {
 			vpk: vpk::from_path( path.as_path().to_str().unwrap() ).unwrap(),
 			path: path,
