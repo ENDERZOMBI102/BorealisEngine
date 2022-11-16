@@ -5,6 +5,8 @@ use std::ops::{Add, Deref};
 use std::path::Path;
 use log::debug;
 
+use crate::color::Color;
+
 type IoResult = std::io::Result<()>;
 
 #[derive(Clone)]
@@ -12,7 +14,7 @@ pub enum KeyValue {
     Float { key: String, value: f64 },
     Int { key: String, value: i64 },
     String { key: String, value: String },
-    Color { key: String, value: Vec<i8> },
+    Color { key: String, value: Color },
     Empty { key: String }
 }
 
@@ -35,7 +37,7 @@ impl KeyValue {
 			_ => None
 		}
 	}
-	pub fn color( &self ) -> Option<Vec<i8>> {
+	pub fn color( &self ) -> Option<Color> {
 		match self {
 			KeyValue::Color { key: _key, value } => Some( value.clone() ),
 			_ => None
@@ -103,10 +105,11 @@ impl ConfigFile {
 	        if color_res.len() == 3 || color_res.len() == 4 {
 		        config.items.push( KeyValue::Color {
 			        key: name.clone(),
-			        value: color_res.iter()
-				        .map( |v| v.clone().unwrap() )
-				        .map( |v| v.clone() )
-				        .collect()
+			        value: Color::from(
+			            color_res.iter()
+						        .map( |v| v.clone().unwrap().clone() as u8 )
+						        .collect::<Vec<u8>>()
+			        )
 		        } );
 		        continue;
 	        }
