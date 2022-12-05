@@ -5,3 +5,4 @@ run
 *.upkf
 *.upkfmeta
 build
+.idea/discord.xml
