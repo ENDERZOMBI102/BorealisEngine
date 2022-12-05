@@ -19,6 +19,5 @@
 [dependencies]
     filesystem = { path = '../filesystem' }
     tier0 = { path = '../tier0' }
-    bytes = '1.1.0'
     walkdir = '2.3.2'
 
