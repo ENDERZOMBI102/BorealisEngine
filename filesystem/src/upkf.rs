@@ -1,13 +1,15 @@
 use std::collections::HashMap;
+use std::fmt::{Debug, Display, Formatter};
 use std::fs::File;
 use std::io::{Cursor, Error, ErrorKind, Read, Write};
-use std::fmt::{Debug, Display, Formatter};
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
 use std::str::Utf8Error;
 use std::string::FromUtf8Error;
+
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use bytes::{Buf, Bytes};
+
 use crate::upkf::UpkfError::MetaDeserializationError;
 
 #[derive(Debug)]
@@ -149,12 +151,12 @@ impl Upkf {
 		}
 	}
 
-	pub fn load( path: &PathBuf, check_content: bool ) -> Result<Self, UpkfError> {
-		let mut file = File::open( path )?;
+	pub fn load( path: PathBuf, check_content: bool ) -> Result<Self, UpkfError> {
+		let mut file = File::open( path.clone() )?;
 		let header = FileHeader::load( &mut file )?;
 		let mut upkf = Self {
 			origin: header.origin,
-			path: Some( path.clone() ),
+			path: Some( path ),
 			entries: vec![]
 		};
 
@@ -258,14 +260,11 @@ impl Element {
 		// create and save header and entry
 		EntryHeader {
 			size: bytes.get_ref().len() as u64,
-			name_size: self.path.as_bytes().len() as u32,
 			name: self.path.clone(),
 			binary: self.binary,
 			compression_type: self.compression,
 			crc: crc32,
-			sha256_size: sha.as_bytes().len() as u16,
 			sha256: sha,
-			metadata_size: self.meta.as_bytes().len() as u32,
 			metadata: self.meta.clone()
 		}.save( file )?;
 		Entry { data: Bytes::copy_from_slice( &bytes.get_mut().as_mut_slice() ) }.save( file )?;
@@ -413,28 +412,25 @@ impl FileHeader {
 
 struct EntryHeader {
 	size: u64,
-	name_size: u32,
 	name: String,
 	binary: bool,
 	compression_type: CompressionType,
 	crc: u32,
-	sha256_size: u16,
 	sha256: String,
-	metadata_size: u32,
 	metadata: String
 }
 
 impl EntryHeader {
 	fn save<'a>( &self, file: &'a mut dyn Write ) -> Result<(), UpkfError> {
 		file.write_u64::<LittleEndian>( self.size )?;
-		file.write_u32::<LittleEndian>( self.name_size )?;
+		file.write_u32::<LittleEndian>( self.name.as_bytes().len() as u32 )?;
 		file.write(self.name.as_bytes() )?;
 		file.write_u8(self.binary as u8 )?;
 		file.write_u8(self.compression_type as u8 )?;
-		file.write_u32::<LittleEndian>(self.crc )?;
-		file.write_u16::<LittleEndian>(self.sha256.as_bytes().len() as u16 )?;
+		file.write_u32::<LittleEndian>( self.crc )?;
+		file.write_u16::<LittleEndian>( self.sha256.as_bytes().len() as u16 )?;
 		file.write(self.sha256.as_bytes() )?;
-		file.write_u32::<LittleEndian>(self.metadata_size )?;
+		file.write_u32::<LittleEndian>( self.metadata.as_bytes().len() as u32 )?;
 		file.write(self.metadata.as_bytes() )?;
 		Ok(())
 	}
@@ -456,14 +452,11 @@ impl EntryHeader {
 		return Ok(
 			EntryHeader {
 				size: size,
-				name_size: name_size,
 				name: name,
 				binary: binary,
 				compression_type: compression_type,
 				crc: crc,
-				sha256_size: sha256_size,
 				sha256: sha256,
-				metadata_size: metadata_size,
 				metadata: metadata
 			}
 		)
@@ -518,14 +511,14 @@ impl UpkfMeta {
 		self.compression
 	}
 
-	pub fn serialize( &self, file: &mut File ) {
+	pub fn serialize(&self, file: &mut File ) -> std::io::Result<()> {
 		let mut map: HashMap<&str, &str> = HashMap::new();
 		map.insert( "compression", self.compression.name() );
 		map.insert( "metadata", &self.string_meta );
 		let binary = self.binary.to_string();
 		map.insert( "binary", &binary );
 
-		file.write_all( json::stringify_pretty( map, 4 ).as_bytes() );
+		file.write_all(json::stringify_pretty(map, 4).as_bytes())
 	}
 
 	pub fn deserialize( file: &mut File, default_compression: CompressionType ) -> Result<UpkfMeta, UpkfError> {

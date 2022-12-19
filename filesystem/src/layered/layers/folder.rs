@@ -12,24 +12,23 @@ impl LayerProvider for FolderLayerProvider {
 		path.is_dir()
 	}
 
-	fn create<'a>(&self, path: PathBuf, fs: Rc<&'a LayeredFS>) -> Result<Arc<dyn Layer + 'a>, LayeredFSError> {
-		Ok( Arc::new( FolderLayer::new( path, fs ) ) )
+	fn create<'a>( &self, path: PathBuf ) -> Result<Arc<dyn Layer + 'a>, LayeredFSError> {
+		Ok( Arc::new( FolderLayer::new( path ) ) )
 	}
 }
 
-pub struct FolderLayer<'a> {
+pub struct FolderLayer {
 	path: PathBuf,
-	fs: Rc<&'a LayeredFS<'a>>,
 	uuid: Uuid
 }
 
-impl FolderLayer<'_> {
-	pub(crate) fn new<'a>( path: PathBuf, fs: Rc<&'a LayeredFS> ) -> FolderLayer<'a> {
-		FolderLayer { path, uuid: Uuid::new_v4(), fs: fs }
+impl FolderLayer {
+	pub fn new<'a>( path: PathBuf ) -> FolderLayer {
+		FolderLayer { path, uuid: Uuid::new_v4() }
 	}
 }
 
-impl Layer for FolderLayer<'_> {
+impl<'a> Layer<'a> for FolderLayer {
 	fn resolve( &self, filename: &str ) -> PathBuf {
 		let mut path = self.path.clone();
 		path.push( filename );
@@ -40,12 +39,12 @@ impl Layer for FolderLayer<'_> {
 		self.resolve( filename ).exists()
 	}
 
-	fn get_file<'a>( &'a self, filename: &str ) -> Result<LayeredFile<'a>, Error> {
+	fn get_file(&self, filename: &str ) -> Result<LayeredFile, Error> {
 		let file = File::open( self.resolve( filename ) )?;
 		Ok( Box::new( FolderLayeredFile {
 			file: file,
 			path: filename.to_string(),
-			layer: self.fs.get_layer_reference( &self.uuid ).unwrap()
+			layer: &self.uuid
 		}))
 	}
 
@@ -63,13 +62,13 @@ impl Layer for FolderLayer<'_> {
 }
 
 
-struct FolderLayeredFile {
+struct FolderLayeredFile<'a> {
 	file: File,
 	path: String,
-	layer: Arc<dyn Layer>
+	layer: &'a Uuid
 }
 
-impl ILayeredFile for FolderLayeredFile {
+impl<'a> ILayeredFile<'a> for FolderLayeredFile<'a> {
 	fn size(&self) -> u64 {
 		self.file.metadata().unwrap().len()
 	}
@@ -87,8 +86,8 @@ impl ILayeredFile for FolderLayeredFile {
 		Ok( string )
 	}
 
-	fn layer(&self) -> Arc<dyn Layer> {
-		self.layer.clone()
+	fn layer(&self) -> &'a Uuid {
+		self.layer
 	}
 
 	fn path(&self) -> String {

@@ -15,29 +15,27 @@ impl LayerProvider for UpkfLayerProvider {
 		false
 	}
 
-	fn create<'a>(&self, path: PathBuf, fs: Rc<&'a LayeredFS>) -> Result<Arc<dyn Layer + 'a>, LayeredFSError> {
-		Ok( Arc::new( UpkfLayer::new( path, fs ) ) )
+	fn create<'a>( &self, path: PathBuf ) -> Result<Arc<dyn Layer + 'a>, LayeredFSError> {
+		Ok( Arc::new( UpkfLayer::new( path ) ) )
 	}
 }
 
 
-pub struct UpkfLayer<'a> {
+pub struct UpkfLayer {
 	upkf: Upkf,
-	fs: Rc<&'a LayeredFS<'a>>,
 	uuid: Uuid
 }
 
-impl UpkfLayer<'_> {
-	pub fn new<'a>( path: PathBuf, fs: Rc<&'a LayeredFS> ) -> UpkfLayer<'a> {
+impl UpkfLayer {
+	pub fn new( path: PathBuf ) -> UpkfLayer {
 		UpkfLayer {
-			upkf: Upkf::load( &path, true ).unwrap(),
-			uuid: Uuid::new_v4(),
-			fs: fs,
+			upkf: Upkf::load( path, true ).unwrap(),
+			uuid: Uuid::new_v4()
 		}
 	}
 }
 
-impl Layer for UpkfLayer<'_> {
+impl<'a> Layer<'a> for UpkfLayer {
 	fn resolve( &self, filename: &str ) -> PathBuf {
 		let mut path = PathBuf::from( String::from( self.upkf.get_path().unwrap().to_str().unwrap() ) + "!" );
 		path.push( filename );
@@ -53,12 +51,12 @@ impl Layer for UpkfLayer<'_> {
 		false
 	}
 
-	fn get_file<'a>( &'a self, filename: &str ) -> Result<LayeredFile<'a>, Error> {
+	fn get_file( &'a self, filename: &str ) -> Result<LayeredFile<'a>, Error> {
 		for element in self.upkf.iter() {
 			if element.get_path() == filename {
 				return Ok( Box::new( UpkfLayeredFile {
 					element: Arc::new( &element ),
-					layer: self.fs.get_layer_reference( &self.uuid ).unwrap()
+					layer: &self.uuid
 				} ) )
 			}
 		}
@@ -81,10 +79,10 @@ impl Layer for UpkfLayer<'_> {
 
 struct UpkfLayeredFile<'a> {
 	element: Arc<&'a Element>,
-	layer: Arc<dyn Layer>
+	layer: &'a Uuid
 }
 
-impl ILayeredFile for UpkfLayeredFile<'_> {
+impl<'a> ILayeredFile<'a> for UpkfLayeredFile<'a> {
 	fn size(&self) -> u64 {
 		self.element.get_content().len() as u64
 	}
@@ -100,8 +98,8 @@ impl ILayeredFile for UpkfLayeredFile<'_> {
 		}
 	}
 
-	fn layer(&self) -> Arc<dyn Layer> {
-		self.layer.clone()
+	fn layer(&self) -> &'a Uuid {
+		self.layer
 	}
 
 	fn path(&self) -> String {

@@ -19,30 +19,28 @@ impl LayerProvider for VpkLayerProvider {
 		false
 	}
 
-	fn create<'a>(&self, path: PathBuf, fs: Rc<&'a LayeredFS>) -> Result<Arc<dyn Layer + 'a>, LayeredFSError> {
-		Ok( Arc::new( VpkLayer::new( path, fs ) ) )
+	fn create<'a>( &self, path: PathBuf ) -> Result<Arc<dyn Layer + 'a>, LayeredFSError> {
+		Ok( Arc::new( VpkLayer::new( path ) ) )
 	}
 }
 
-pub struct VpkLayer<'a> {
+pub struct VpkLayer {
 	path: PathBuf,
 	vpk: VPK,
-	fs: Rc<&'a LayeredFS<'a>>,
 	uuid: Uuid,
 }
 
-impl<'a> VpkLayer<'a> {
-	pub fn new( path: PathBuf, fs: Rc<&'a LayeredFS>, ) -> VpkLayer<'a> {
+impl VpkLayer {
+	pub fn new( path: PathBuf ) -> VpkLayer {
 		VpkLayer {
 			vpk: vpk::from_path( path.as_path().to_str().unwrap() ).unwrap(),
 			path: path,
-			fs: fs,
 			uuid: Uuid::new_v4()
 		}
 	}
 }
 
-impl<'a> Layer for VpkLayer<'a> {
+impl<'a> Layer<'a> for VpkLayer {
 	fn resolve( &self, filename: &str ) -> PathBuf {
 		let mut path = PathBuf::from( String::from( self.path.to_str().unwrap() ) + "!" );
 		path.push( filename );
@@ -53,13 +51,13 @@ impl<'a> Layer for VpkLayer<'a> {
 		self.vpk.tree.contains_key( filename )
 	}
 
-	fn get_file(&self, filename: &str) -> Result<LayeredFile<'a>, Error> {
+	fn get_file(&'a self, filename: &str) -> Result<LayeredFile<'a>, Error> {
 		for ( name, entry ) in self.vpk.tree.iter() {
 			if name == filename {
 				return Ok( Box::new( VpkLayeredFile {
 					path: self.path.to_str().unwrap().to_string(),
 					entry: Arc::new( &entry ),
-					layer: self.fs.get_layer_reference( &self.uuid ).unwrap()
+					layer: &self.uuid
 				}))
 			}
 		}
@@ -83,10 +81,10 @@ impl<'a> Layer for VpkLayer<'a> {
 struct VpkLayeredFile<'a> {
 	path: String,
 	entry: Arc<&'a VPKEntry>,
-	layer: Arc<dyn Layer + 'a>
+	layer: &'a Uuid
 }
 
-impl ILayeredFile for VpkLayeredFile<'_> {
+impl<'a> ILayeredFile<'a> for VpkLayeredFile<'a> {
 	fn size( &self ) -> u64 {
 		self.entry.get().unwrap().len() as u64
 	}
@@ -107,8 +105,8 @@ impl ILayeredFile for VpkLayeredFile<'_> {
 		Ok( string )
 	}
 
-	fn layer(&self) -> Arc<dyn Layer> {
-		self.layer.clone()
+	fn layer(&self) -> &'a Uuid {
+		self.layer
 	}
 
 	fn path(&self) -> String {
