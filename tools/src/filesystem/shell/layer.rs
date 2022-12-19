@@ -20,9 +20,9 @@ pub(crate) fn layerHandler( fs: &mut LayeredFS, mut args: Vec<&str>, currentDir:
 			println!("Layer list successfully reversed.")
 		}
 		[ action @ ( "append" | "prepend" ), rawPath ] => {
-			let path = Path::new(rawPath).canonicalize()?;
+			let path = Path::new(rawPath).canonicalize().unwrap();
 
-			if let Err(err) = fs.try_add_layer( path, "prepend" == action ) {
+			if let Err(err) = fs.add_layer( path, *action == "prepend" ) {
 				match err {
 					LayeredFSError::NoExtension => eprintln!("ERROR: If adding a file, please make sure it has a valid extension."),
 					LayeredFSError::Unsupported(ext) => eprintln!( "ERROR: Unsupported file type: {ext}" )

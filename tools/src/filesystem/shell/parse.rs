@@ -9,7 +9,7 @@ pub(crate) fn parseHandler( fs: &mut LayeredFS, mut args: Vec<&str>, currentDir:
 	type Handler<'a> = &'a dyn Fn(&str, &str) -> Box<dyn Debug>;
 	let mut handlers = HashMap::<&str, Handler>::new();
 
-	let mut process = |path: &str, stage: &str, handlers: HashMap<&str, Handler>| match fs.get_file(path) {
+	let process = |path: &str, stage: &str, handlers: HashMap<&str, Handler>| match fs.get_file(path) {
 		Err(kind) => eprintln!("parse: failed to load file \"{}\": {}", path, kind),
 		Ok(layeredFile) => match layeredFile.read_string() {
 			Err(kind) => eprintln!("parse: failed to read file \"{}\": {}", path, kind),
