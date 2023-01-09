@@ -6,7 +6,7 @@
     insert_final_newline = true
     max_line_length = 120
     tab_width = 4
-    ij_continuation_indent_size = 8
+    ij_continuation_indent_size = 4
     ij_formatter_off_tag = @formatter:off
     ij_formatter_on_tag = @formatter:on
     ij_formatter_tags_enabled = false
@@ -16,7 +16,6 @@
 
 [*.rs]
     max_line_length = 100
-    ij_continuation_indent_size = 4
     ij_smart_tabs = true
     ij_rust_align_multiline_chained_methods = false
     ij_rust_align_multiline_parameters = true
@@ -83,7 +82,6 @@
     ij_glsl_keep_indents_on_empty_lines = false
 
 [{*.json,*.upkfmeta}]
-    ij_continuation_indent_size = 4
     ij_json_array_wrapping = split_into_lines
     ij_json_keep_blank_lines_in_code = 0
     ij_json_keep_indents_on_empty_lines = false
@@ -99,7 +97,7 @@
     ij_json_spaces_within_brackets = false
     ij_json_wrap_long_lines = false
 
-[{*.markdown,*.md}]
+[*.md]
     indent_style = space
     ij_markdown_force_one_space_after_blockquote_symbol = true
     ij_markdown_force_one_space_after_header_symbol = true
