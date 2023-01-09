@@ -2,7 +2,7 @@
     name = 'tools'
     version = '0.1.0'
     edition = '2021'
-    description = 'All Ungine tools are store here'
+    description = 'Individually-runnable generic tools'
 
 [[bin]]
     name = 'compressor'

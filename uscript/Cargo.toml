@@ -2,9 +2,10 @@
     name = 'uscript'
     version = '0.1.0'
     edition = '2021'
+	description = 'Scripting abstraction layer capable of running multiple environments at the same time.'
 
 [lib]
-    crate_type = [ 'rlib', 'dylib' ]
+    crate_type = [ 'dylib' ]
 
 [dependencies]
     log = '0.4.17'

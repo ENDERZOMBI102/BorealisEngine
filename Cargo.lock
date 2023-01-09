@@ -165,20 +165,18 @@ checksum = "cdb031dd78e28731d87d56cc8ffef4a8f36ca26c38fe2de700543e627f8a464a"
 
 [[package]]
 name = "bin-layout"
-version = "6.0.0"
+version = "7.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2108ea53f8b66136b46676066c6be9db3c7e4316bc330374c2e046a52dc191ba"
+checksum = "a284436556a709b7a60883905959cd1c575c6e1cc6b504dc1857791757582cb6"
 dependencies = [
  "bin-layout-derive",
- "stack-array",
- "util-cursor",
 ]
 
 [[package]]
 name = "bin-layout-derive"
-version = "0.4.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "800c718c779c2540d2ff71d239b617184df10ff09e8a9147c7504087bd5947cd"
+checksum = "d4c5cbfced02f7dbf40b17abffd3f10c2ce4636e515e7aa2a7ea6319543fb34b"
 dependencies = [
  "quote",
  "syn",
@@ -1762,11 +1760,12 @@ dependencies = [
 
 [[package]]
 name = "savefile"
-version = "0.10.1"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a33022731817bb74a2e27487c0caa94d040d5a87ab010624c56d340ceef464f9"
+checksum = "d098044af441525796cb4c462c313c4c9b3568526fb1db6cb7229c513bc0da6b"
 dependencies = [
- "arrayvec 0.5.2",
+ "arrayvec 0.7.2",
+ "bit-set",
  "bit-vec",
  "byteorder",
  "indexmap",
@@ -1955,12 +1954,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "stack-array"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "332be12b550e41ddc136fd0bd2ef1272e2a49e1ee2a843770f0ccbd86f6fd3b7"
-
-[[package]]
 name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2041,6 +2034,13 @@ dependencies = [
 
 [[package]]
 name = "tier0"
+version = "0.1.0"
+dependencies = [
+ "log",
+]
+
+[[package]]
+name = "tier1"
 version = "0.1.0"
 dependencies = [
  "log",
@@ -2165,12 +2165,6 @@ dependencies = [
  "abi_stable",
  "log",
 ]
-
-[[package]]
-name = "util-cursor"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ef0862c74ac2a3515aec683cd6d03fb5b7f3adfafdbe21ef619041c322118eb"
 
 [[package]]
 name = "uuid"

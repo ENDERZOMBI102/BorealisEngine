@@ -8,12 +8,12 @@
     license = 'MIT'
 
 [workspace]
-    resolver = '2'
     members = [
-        '.', 'filesystem', 'renderer',
-        'richpresence', 'tier0', 'engine',
-        'tools',
-        'uscript', 'uscript/angelscript'
+        '.',
+		'filesystem', 'renderer', 'richpresence', # modules
+		'tier0', 'tier1', 'engine',               # required modules
+		'tools',                                  # individually-runnable generic tools
+        'uscript', 'uscript/angelscript'          # scripting
     ]
 
 [dependencies]

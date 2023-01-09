@@ -5,11 +5,11 @@
     description = 'FileSystem utilities'
 
 [lib]
-    crate_type = [ 'rlib', 'dylib' ]
+    crate_type = [ 'dylib' ]
 
 [dependencies]
     json = '0.12.4'
-    savefile = '0.10.1'
+    savefile = '0.11.0'
     byteorder = '1.4.3'
     bytes = '1.1.0'
     lzma-rs = '0.2.0'
@@ -19,6 +19,6 @@
     sha256 = '1.0.3'
     path-slash = '0.2.1'
     vpk = '0.1.4'
-    bin-layout = '6.0.0'
+    bin-layout = '7.1.0'
     tier0 = { path = '../tier0' }
     uuid = { version = '1.2.1', features = [ "v4", "fast-rng", "macro-diagnostics" ] }

@@ -4,7 +4,7 @@
     edition = '2021'
 
 [lib]
-    crate_type = [ 'rlib', 'dylib' ]
+    crate_type = [ 'dylib' ]
 
 [dependencies]
     discord-rich-presence = '0.2.3'
