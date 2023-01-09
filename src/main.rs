@@ -4,7 +4,7 @@ use log::error;
 * game executable
 */
 fn main() {
-	tier0::console::console();
+	tier1::console::console();
 	match std::env::var("EXEC").unwrap().as_str() {
 		"renderer" => renderer::renderer::main(),
 		"commandline" => tier0::commandline::main(),

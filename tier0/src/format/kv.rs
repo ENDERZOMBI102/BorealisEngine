@@ -1,4 +1,4 @@
-#![allow(unused_variables)]
+#![allow(unused_variables, unused_mut)]
 
 use std::fmt::Debug;
 

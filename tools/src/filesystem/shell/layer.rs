@@ -22,13 +22,14 @@ pub(crate) fn layerHandler( fs: &mut LayeredFS, mut args: Vec<&str>, currentDir:
 		[ action @ ( "append" | "prepend" ), rawPath ] => {
 			let path = Path::new(rawPath).canonicalize().unwrap();
 
-			if let Err(err) = fs.add_layer( path, *action == "prepend" ) {
-				match err {
-					LayeredFSError::NoExtension => eprintln!("ERROR: If adding a file, please make sure it has a valid extension."),
-					LayeredFSError::Unsupported(ext) => eprintln!( "ERROR: Unsupported file type: {ext}" )
-				}
-				return;
-			}
+			// FIXME: This errors
+			// if let Err(err) = fs.add_layer( path, *action == "prepend" ) {
+			// 	match err {
+			// 		LayeredFSError::NoExtension => eprintln!("ERROR: If adding a file, please make sure it has a valid extension."),
+			// 		LayeredFSError::Unsupported(ext) => eprintln!( "ERROR: Unsupported file type: {ext}" )
+			// 	}
+			// 	return;
+			// }
 
 			println!( "{action}ded {:?} as new layer", path )
 		}

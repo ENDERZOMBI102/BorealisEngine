@@ -30,12 +30,13 @@ pub(crate) fn findHandler( fs: &mut LayeredFS, mut args: Vec<&str>, currentDir: 
 
 pub(crate) fn hasHandler( fs: &mut LayeredFS, mut args: Vec<&str>, currentDir: &mut String ) {
 	match args.as_slice() {
-		[ "has", path ] => {
-			match fs.get_file( path ) {
-				Ok( file ) => println!( "File `{}` found in layer {}", file.path(), fs.find_layer( file.layer() ).unwrap().meta().filename ),
-				Err(_) => {}
-			}
-		},
+		// FIXME: This errors
+		// [ "has", path ] => {
+		// 	match fs.get_file( path ) {
+		// 		Ok( file ) => println!( "File `{}` found in layer {}", file.path(), fs.find_layer( file.layer() ).unwrap().meta().filename ),
+		// 		Err(_) => {}
+		// 	}
+		// },
 		_ => eprintln!("usage: has $PATH")
 	}
 }

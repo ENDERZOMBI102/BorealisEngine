@@ -17,7 +17,8 @@ pub fn main() {
 	let commands = getCommands();
 
 	let mut fs = LayeredFS::new();
-	fs.add_layer( std::env::current_dir().unwrap(), false ).expect("Failed to add current dir as layer.");
+	// FIXME: This errors
+	// fs.add_layer( std::env::current_dir().unwrap(), false ).expect("Failed to add current dir as layer.");
 
 	println!( "FileSystem shell v1.4" );
 
@@ -52,13 +53,14 @@ pub fn main() {
 					_ => None.unwrap()
 				}
 
+				// FIXME: This errors
 				// handle command
-				match commands.get( command[0] ) {
-					// registered command to execute
-					Some( ( handler, _ ) ) => handler.call( ( &mut fs, command, &mut currentDir ) ),
-					// unknown command
-					None => eprintln!( "ERROR: Unknown command {}", command[0] )
-				}
+				// match commands.get( command[0] ) {
+				// 	// registered command to execute
+				// 	Some( ( handler, _ ) ) => handler.call( ( &mut fs, command, &mut currentDir ) ),
+				// 	// unknown command
+				// 	None => eprintln!( "ERROR: Unknown command {}", command[0] )
+				// }
 			}
 			Err(error) => eprintln!( "ERROR: {error}" )
 		}
