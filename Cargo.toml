@@ -1,19 +1,21 @@
 [package]
     name = 'ungine'
     version = '0.1.0'
-    authors = ['ENDERZOMBI102']
+    authors = [ 'ENDERZOMBI102' ]
     edition = '2021'
-    description = 'A source-inspired game engine'
+    description = 'A game engine inspired by Valbe\'s Source Engine'
     repository = 'https://github.com/ENDERZOMBI102/Ungine.rs'
     license = 'MIT'
 
 [workspace]
     members = [
         '.',
-		'filesystem', 'renderer', 'richpresence', # modules
-		'tier0', 'tier1', 'engine',               # required modules
-		'tools',                                  # individually-runnable generic tools
-        'uscript', 'uscript/angelscript'          # scripting
+		# shared modules
+		'tier0', 'tier1', 'uscript', 'filesystem', 'filesystem/vpk', # TODO: Remove vpk from here
+		# client modules
+		'renderer', 'richpresence',
+		# individually-runnable generic tools
+		'tools',
     ]
 
 [dependencies]
