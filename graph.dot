@@ -1,0 +1,8 @@
+digraph program {
+	richpresence -> { tier0 };
+	filesystem -> { tier0 };
+	renderer -> { tier0 };
+	client -> { shared renderer richpresence };
+	server -> { shared };
+	shared -> { uscript tier0 tier1 filesystem };
+}
