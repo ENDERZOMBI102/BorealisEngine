@@ -3,7 +3,7 @@
     version = '0.1.0'
     authors = [ 'ENDERZOMBI102' ]
     edition = '2021'
-    description = 'A game engine inspired by Valbe\'s Source Engine'
+    description = "A game engine inspired by Valve's Source Engine"
     repository = 'https://github.com/ENDERZOMBI102/Ungine.rs'
     license = 'MIT'
 
@@ -23,6 +23,5 @@
     renderer = { path = 'renderer' }
     richpresence = { path = 'richpresence' }
     tier0 = { path = 'tier0' }
-    engine = { path = 'engine' }
     rand = '0.8.5'
     log = '0.4.17'
