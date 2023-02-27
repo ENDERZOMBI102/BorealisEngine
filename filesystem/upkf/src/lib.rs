@@ -1,50 +1,41 @@
 use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter};
 use std::fs::File;
-use std::io::{Cursor, Error, ErrorKind, Read, Write};
+use std::io::{Cursor, Read, Write};
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
-use std::str::Utf8Error;
 use std::string::FromUtf8Error;
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use bytes::{Buf, Bytes};
+use thiserror::Error;
 
-use crate::upkf::UpkfError::MetaDeserializationError;
-
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum UpkfError {
+	#[error("the given file isn't a UPK file")]
 	NotAnUpkFileError,
+	#[error("the upk file contains corrupted data")]
 	CorruptedDataError,
+	#[error("the given upk file is of an unsupported version")]
 	VersionNotSupportedError,
-	IoError { err: ErrorKind },
+	#[error("some IO error occurred")]
+	IoError( #[from] std::io::Error ),
+	#[error("the crc32 check failed")]
 	Crc32CheckFailed,
+	#[error("the sha256 check failed")]
 	Sha256CheckFailed,
+	#[error("the metadata has failed to deserialize")]
 	MetaDeserializationError,
-	StringUtf8Error { err: Utf8Error },
+	#[error("a string wasn't valid utf8")]
+	StringUtf8Error( #[from] FromUtf8Error ),
+	#[error("the entry uses an unknown compression method")]
 	UnknownCompressionMethodError,
-	CompressionError { err: lzma_rs::error::Error }
-}
-
-impl From<Error> for UpkfError {
-	fn from( err: Error ) -> Self {
-		Self::IoError { err: err.kind() }
-	}
-}
-
-impl From<FromUtf8Error> for UpkfError {
-	fn from( err: FromUtf8Error ) -> Self {
-		Self::StringUtf8Error { err: err.utf8_error() }
-	}
-}
-
-impl From<lzma_rs::error::Error> for UpkfError {
-	fn from( err: lzma_rs::error::Error ) -> Self {
-		Self::CompressionError { err: err }
-	}
+	#[error("error compressing entry with LZMA")]
+	CompressionError( #[from] lzma_rs::error::Error )
 }
 
 #[derive(Debug, Copy, Clone, PartialOrd, PartialEq)]
+#[repr(u8)]
 pub enum CompressionType {
 	NONE,
 	LZMA,
@@ -363,9 +354,9 @@ impl FileHeader {
 			version: 0,
 			recompressed: compress_entries,
 			origin_size: origin.as_bytes().len() as u16,
-			origin: origin,
-			chksum: chksum,
-			entry_count: entry_count
+			origin,
+			chksum,
+			entry_count
 		}
 	}
 
@@ -432,6 +423,7 @@ impl EntryHeader {
 		file.write(self.sha256.as_bytes() )?;
 		file.write_u32::<LittleEndian>( self.metadata.as_bytes().len() as u32 )?;
 		file.write(self.metadata.as_bytes() )?;
+
 		Ok(())
 	}
 
@@ -440,26 +432,17 @@ impl EntryHeader {
 		let name_size = file.read_u32::<LittleEndian>()?;
 		let mut name_buf = vec![ 0 as u8; name_size as usize ]; file.read_exact( &mut name_buf )?;
 		let name = String::from_utf8(name_buf)?;
-		let binary = file.read_u8().unwrap() != 0;
-		let compression_type = CompressionType::try_from( file.read_u8().unwrap() ).unwrap_or(CompressionType::NONE);
+		let binary = file.read_u8()? != 0;
+		let compression_type = CompressionType::try_from( file.read_u8()? )?;
 		let crc = file.read_u32::<LittleEndian>()?;
 		let sha256_size = file.read_u16::<LittleEndian>()?;
 		let mut sha256_buf = vec![ 0 as u8; sha256_size as usize ]; file.read_exact( &mut sha256_buf )?;
-		let sha256 = String::from_utf8( sha256_buf ).unwrap();
+		let sha256 = String::from_utf8( sha256_buf )?;
 		let metadata_size = file.read_u32::<LittleEndian>()?;
 		let mut metadata_buf = vec![ 0 as u8; metadata_size as usize ]; file.read_exact( &mut metadata_buf)?;
 		let metadata = String::from_utf8(metadata_buf)?;
-		return Ok(
-			EntryHeader {
-				size: size,
-				name: name,
-				binary: binary,
-				compression_type: compression_type,
-				crc: crc,
-				sha256: sha256,
-				metadata: metadata
-			}
-		)
+
+		Ok( EntryHeader { size, name, binary, compression_type, crc, sha256, metadata } )
 	}
 }
 
@@ -550,6 +533,6 @@ impl UpkfMeta {
 			}
 			return Ok( result );
 		}
-		Err( MetaDeserializationError )
+		Err( UpkfError::MetaDeserializationError )
 	}
 }

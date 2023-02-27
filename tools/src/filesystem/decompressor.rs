@@ -2,11 +2,11 @@ use std::env;
 use std::os::windows::fs::MetadataExt;
 use std::path::Path;
 use std::process::exit;
-use filesystem::upkf::Upkf;
+use upkf::Upkf;
 
 pub fn main() {
 	let argv: Vec<String> = env::args().collect();
-	let file_to_decompress = Path::new( argv.get(1).unwrap() );
+	let file_to_decompress = Path::new( argv.get(1)? );
 	// let file_to_decompress = Path::new("filesystem.upkf");
 	let no_data_text: String = String::from("N/D");
 
@@ -16,9 +16,9 @@ pub fn main() {
 	}
 
 	println!( "Loading {}", file_to_decompress.display() );
-	let upkf = Upkf::load( file_to_decompress, true ).unwrap();
+	let upkf = Upkf::load( file_to_decompress.to_path_buf(), true )?;
 	println!( "Origin: {}", upkf.get_origin() );
-	println!( "File Size: {}", file_to_decompress.metadata().unwrap().file_size() );
+	println!( "File Size: {}", file_to_decompress.metadata()?.file_size() );
 	println!( "Entry Count: {}", upkf.count() );
 	println!( "Entries:" );
 	for entry in upkf.iter() {
@@ -31,8 +31,8 @@ pub fn main() {
 		let mut crc32d = no_data_text.clone();
 		let mut sha256d = no_data_text.clone();
 		if crc32.is_some() && sha256.is_some() {
-			crc32d = crc32.unwrap().to_string();
-			sha256d = sha256.clone().unwrap();
+			crc32d = crc32?.to_string();
+			sha256d = sha256.clone()?;
 		}
 		println!( " - File Path: {}", entry.get_path() );
 		println!( "   - Meta: {}", meta );

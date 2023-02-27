@@ -18,6 +18,8 @@
 
 [dependencies]
     filesystem = { path = '../filesystem' }
-    tier0 = { path = '../tier0' }
+	upkf = { path = '../filesystem/upkf' }
+	tier0 = { path = '../tier0' }
     walkdir = '2.3.2'
+	bytes = '1.4.0'
 

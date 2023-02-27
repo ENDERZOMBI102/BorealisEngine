@@ -3,8 +3,8 @@ use std::io::{Error, ErrorKind};
 use std::path::PathBuf;
 use std::sync::Arc;
 use path_slash::PathBufExt;
+use upkf::{Element, Upkf};
 use crate::layered::*;
-use crate::upkf::{Element, Upkf};
 
 pub struct UpkfLayerProvider { }
 impl LayerProvider for UpkfLayerProvider {

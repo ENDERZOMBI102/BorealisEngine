@@ -123,7 +123,7 @@ pub fn load<P: AsRef<Path>>( file: P ) -> Result<(), VpkError> {
 				};
 
 				entries.push( entry );
-				println!( "{:?}", entry );
+				println!( "{:?}", entries.last().unwrap() );
 			}
 		}
 	}

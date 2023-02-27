@@ -11,7 +11,7 @@
     members = [
         '.',
 		# shared modules
-		'tier0', 'tier1', 'uscript', 'filesystem', 'filesystem/vpk', # TODO: Remove vpk from here
+		'tier0', 'tier1', 'uscript', 'filesystem', 'filesystem/upkf', 'filesystem/vpk', # TODO: Remove vpk from here
 		# client modules
 		'renderer', 'richpresence',
 		# individually-runnable generic tools
