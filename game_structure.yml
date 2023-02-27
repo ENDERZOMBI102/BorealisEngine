@@ -1,0 +1,60 @@
+# game folder structure
+Game:
+  - bin:                        # folder with all the engine binaries
+      - angelscript.dll         # dll containing the angelscript uscript bindings + runtime
+      - python.dll              # dll containing the python uscript bindings + runtime
+      - fmod.dll                # dll containing the fmod audio engine
+      - rmlui.dll               # contains the RmlUI library
+      - uscript.dll             # dll containing the uscript runtime + binding detector
+      - pak.dll                 # dll containing the upk and vpk implementations
+      - filesystem.dll          # dll containing the fs interface
+      - renderer.dll            # dll containing the renderer
+      - richpresence.dll        # dll containing the various rich presence clients ( steam, discord, etc )
+  - plugins:                    # folder where plugins are contained, the engine will search for plugins to load here
+      - autoload.e              # file containing a list of plugins to load on engine startup ( this permits special privileges )
+      - emptyplugin.dll         # dll with an empty plugin ( just a command that displays the dll name )
+  - game:                       # folder where all game-specific resources are kept
+      - bin:                    # folder with game-specific binaries, for now only client and server dlls
+          - client.dll          # main game client dll
+          - server.dll          # main game server dll
+      - cfg:                    # game and user specific configs
+          - config.e            # contains console commands to setup options
+          - video.e             # video options
+          - mapload.cfg         # exec'd every map first load
+      - save:                   # contains quick-saves and full-saves
+          - mapname_saveid.save # contains a serialized game state, map-name is the map the save was made on
+      - maps:                   # contains the game's maps
+          - mapname.otp | bsp   # our map format is based off octrees, but we also support source's BSP ( or at least convert it at load-time )
+      - screenshots:            # contain screenshots
+          - mapname_date.png
+      - scripts:                # contains the game's scripts
+          - uscript:            # stands for ungine script
+              - gamescript0.as  # angelscript script, names MUST be unique, as extension is only for runtime specification
+              - gamescript1.py  # python script
+              - gamescript2.nut # squirrel script
+              - playerspawn.cfg # exec'd every time the player spawns in the world
+          - webui:              # scripts available to run in the UI framework
+              - main_menu.ts    # typescript script, will be compiled on load
+      - models:
+          - model0.mdl          # valve model metadata
+          - model0.vtx          # valve texture references
+          - model0.vvd          # valve meshes
+          - model1.obj          # mesh + texture references + metadata
+      - materials:
+          - material0.vmt       # valve material metadata
+          - material0.vtf       # valve texture
+          - material1.mat       # material metadata
+          - material1.tga       # material texture
+      - sounds:
+          - sound0.wav | ogg    # sound files!
+      - media:                  # folder to things related to ui
+          - webui:              # ui framework folder
+              main_menu.xml     # contains the main menu in a html-like format
+          - background.webm     # a video that is displayed in the main menu background
+  # it's a mod root folder, everything placed in here will override files in a game, while also providing new ones
+  # this will be used only if the game executable is exec'd with the parameter -game mod0name
+  - mod0name:
+      - scripts:
+          - webui:
+              - main_menu.ts    # overwrites the game one ( id: mod0name:scripts/webui/main_menu.ts )
+  - game.exe                    # will start the engine
