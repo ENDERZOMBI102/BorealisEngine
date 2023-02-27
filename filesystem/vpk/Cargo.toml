@@ -1,0 +1,12 @@
+[package]
+	name = 'vpk'
+	version = '0.1.0'
+	edition = '2021'
+	description = 'Library for interacting with Valve Pak files'
+
+[lib]
+	crate_type = [ 'dylib' ]
+
+[dependencies]
+	thiserror = '1.0.38'
+	byteorder = '1.4.3'
