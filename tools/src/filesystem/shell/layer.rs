@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use filesystem::layered::{LayeredFS, LayeredFSError};
+use filesystem::layered::LayeredFS;
 
 pub(crate) fn layerHandler( fs: &mut LayeredFS, mut args: Vec<&str>, currentDir: &mut String ) {
 	args.remove(0); // remove "layer" prefix

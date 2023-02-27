@@ -29,7 +29,7 @@ pub enum E {
 impl Display for E {
 	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
 		match self {
-			E::None => f.write_str( "None" ),
+			E::None => f.write_str( "null" ),
 			E::Integer { val } => f.write_fmt( format_args!( "{}", val ) ),
 			E::Float { val } => f.write_fmt( format_args!( "{}", val ) ),
 			E::String { val } => f.write_fmt( format_args!("\"{val}\"") ),
@@ -45,9 +45,9 @@ impl Display for E {
 			},
 			E::Map { values } => {
 				f.write_str("{")?;
-				for keyVal in values {
-					f.write_fmt(format_args!( "{}: {}", keyVal.key, keyVal.value ) )?;
-					if keyVal != values.last().unwrap() {
+				for key_val in values {
+					f.write_fmt(format_args!("{}: {}", key_val.key, key_val.value ) )?;
+					if key_val != values.last().unwrap() {
 						f.write_str("," )?;
 					}
 				}
@@ -62,7 +62,7 @@ impl Display for E {
 					}
 				}
 				f.write_str("}}")
-			},
+			}
 		}
 	}
 }
@@ -70,7 +70,7 @@ impl Display for E {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TokType {
 	Word,
-	Semicolon,
+	Colon,
 	Dot,
 
 	Padding,
@@ -92,6 +92,7 @@ pub enum TokValue {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct Loc {
 	file: String,
 	line: usize,
@@ -116,12 +117,12 @@ impl Token {
 		}
 	}
 
-	fn stringValue(&self) -> String {
+	fn string_value(&self) -> String {
 		match &self.value {
 			TokValue::String { value } => value.to_string(),
 			TokValue::Int { value } => value.to_string(),
 			TokValue::Float { value } => value.to_string(),
-			TokValue::None => "None".to_string()
+			TokValue::None => "none".to_string()
 		}
 	}
 }
@@ -198,7 +199,7 @@ impl Tokenizer {
 					self.index += 1;
 				}
 				':' => {
-					self.add( TokType::Semicolon, TokValue::None );
+					self.add(TokType::Colon, TokValue::None );
 					self.index += 1;
 					self.char += 1;
 				}
@@ -274,11 +275,11 @@ impl Lexer {
 		self.tok_list[ self.index - 1 ].clone()
 	}
 
-	fn peekType( &mut self ) -> &TokType {
+	fn peek_type(&mut self ) -> &TokType {
 		&self.peek(1).typ
 	}
 
-	fn peekIsType( &mut self, offset: usize, typ: TokType ) -> bool {
+	fn peek_is_type(&mut self, offset: usize, typ: TokType ) -> bool {
 		&self.peek( offset ).typ == &typ
 	}
 
@@ -286,26 +287,26 @@ impl Lexer {
 		let mut processed_tokens = vec![];
 
 		while self.tok_list.len() > self.index {
-			if self.peekIsType( 0, TokType::Word ) && self.peekIsType( 1, TokType::Semicolon ) {
+			if self.peek_is_type(0, TokType::Word ) && self.peek_is_type(1, TokType::Colon ) {
 				// key
 				processed_tokens.push( Token::new( TokType::Key, self.consume() ) );
 			} else if (
-					self.peekIsType( 0, TokType::Semicolon ) ||
-					self.peekIsType( 0, TokType::Padding )
+					self.peek_is_type(0, TokType::Colon ) ||
+					self.peek_is_type(0, TokType::Padding )
 				) &&
-				self.peekIsType( 1, TokType::Word ) &&
-				!self.peekIsType( 2, TokType::Semicolon )
+				self.peek_is_type(1, TokType::Word ) &&
+				!self.peek_is_type(2, TokType::Colon )
 			{
 				// value
 				self.consume();
 				processed_tokens.push( Token::new( TokType::Value, self.consume() ) );
-			} else if self.peekIsType( 0, TokType::Dot ) && self.peekIsType( 1, TokType::Word ) && self.peekIsType( 2, TokType::Semicolon ) {
+			} else if self.peek_is_type(0, TokType::Dot ) && self.peek_is_type(1, TokType::Word ) && self.peek_is_type(2, TokType::Colon ) {
 				// class
 				self.consume();
 				let value = self.consume();
 				self.consume();
 				processed_tokens.push( Token::new( TokType::Class, value ) );
-			} else if vec![ TokType::Newline, TokType::EOF ].contains( self.peekType() ) {
+			} else if vec![ TokType::Newline, TokType::EOF ].contains( self.peek_type() ) {
 				// newline/eof
 				let tokk = self.consume();
 				processed_tokens.push( tokk );
@@ -338,7 +339,7 @@ impl Parser {
 		self.tokens[ self.index - 1 ].clone()
 	}
 
-	fn consumeIfIs( &mut self, typ: TokType ) {
+	fn consume_if_is(&mut self, typ: TokType ) {
 		if self.peek(0).typ == typ {
 			self.consume();
 		}
@@ -348,14 +349,14 @@ impl Parser {
 		if self.peek(0).typ != TokType::Key {
 			return None;
 		}
-		Some( self.consume().stringValue() )
+		Some( self.consume().string_value() )
 	}
 
 	fn class( &mut self ) -> Option<String> {
 		if self.peek(0).typ != TokType::Class {
 			return None;
 		}
-		Some( self.consume().stringValue() )
+		Some( self.consume().string_value() )
 	}
 
 	fn value( &mut self ) -> E {
@@ -370,10 +371,10 @@ impl Parser {
 		}
 	}
 
-	fn keyValue( &mut self ) -> KeyValue {
+	fn key_value(&mut self ) -> KeyValue {
 		if let Some( key ) = self.key() {
 			// there's a key
-			if self.peek( 0 ).typ == TokType::Semicolon {
+			if self.peek( 0 ).typ == TokType::Colon {
 				self.consume(); // remove the semicolon
 
 				// its either a map or a list
@@ -407,7 +408,7 @@ impl Parser {
 			if self.peek(0).typ != TokType::Key {
 				break
 			}
-			fields.push( self.keyValue() );
+			fields.push( self.key_value() );
 		}
 
 		E::Object { class: class, fields: fields }
@@ -426,14 +427,14 @@ impl Parser {
 
 	fn map( &mut self ) -> E {
 		let mut items = vec![];
-		self.consumeIfIs(TokType::Semicolon); // remove the newline
+		self.consume_if_is(TokType::Colon); // remove the newline
 
-		let firstKey = self.peek(0).clone();
+		let first_key = self.peek(0).clone();
 		while self.index < self.tokens.len() {
-			if self.peek(0).typ != TokType::Key || self.peek(0).padding != firstKey.padding {
+			if self.peek(0).typ != TokType::Key || self.peek(0).padding != first_key.padding {
 				break
 			}
-			items.push( self.keyValue() );
+			items.push( self.key_value() );
 		}
 		E::Map { values: items }
 	}
