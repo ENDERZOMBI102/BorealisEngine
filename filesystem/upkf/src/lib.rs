@@ -10,6 +10,13 @@ use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use bytes::{Buf, Bytes};
 use thiserror::Error;
 
+
+// TODO: Separate a bit impl detail and API
+// TODO: Improve the format with fragmentation ( like vpk's _dir and _00 )
+// TODO: Improve format metadata sizes ( ex. with null-term'd string )
+// TODO: Improve file store method ( ex. with a tree instead of array )
+
+
 #[derive(Error, Debug)]
 pub enum UpkfError {
 	#[error("the given file isn't a UPK file")]
