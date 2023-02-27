@@ -1,13 +1,10 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::path::Path;
-
 use filesystem::layered::LayeredFS;
-use tier0::format::e;
 
-pub(crate) fn parseHandler( fs: &mut LayeredFS, mut args: Vec<&str>, currentDir: &mut String ) {
+pub(crate) fn parseHandler(fs: &mut LayeredFS, mut args: Vec<&str>, currentDir: &mut String ) {
 	type Handler<'a> = &'a dyn Fn(&str, &str) -> Box<dyn Debug>;
-	let mut handlers = HashMap::<&str, Handler>::new();
+	let _handlers = HashMap::<&str, Handler>::new();
 
 	// FIXME: This errors
 	// let process = |path: &str, stage: &str, handlers: HashMap<&str, Handler>| match fs.get_file(path) {
