@@ -63,15 +63,13 @@ pub fn load<P: AsRef<Path>>( file: P ) -> Result<(), VpkError> {
 
 	let header = match version {
 		1 => VpkHeader::V1 { signature, directory_length },
-		2 => {
-			VpkHeader::V2 {
-				signature,
-				directory_length,
-				file_data_section_size: file.read_u32::<LittleEndian>()?,
-				archive_md5_section_size: file.read_u32::<LittleEndian>()?,
-				other_md5_section_size: file.read_u32::<LittleEndian>()?,
-				signature_section_size: file.read_u32::<LittleEndian>()?
-			}
+		2 => VpkHeader::V2 {
+			signature,
+			directory_length,
+			file_data_section_size: file.read_u32::<LittleEndian>()?,
+			archive_md5_section_size: file.read_u32::<LittleEndian>()?,
+			other_md5_section_size: file.read_u32::<LittleEndian>()?,
+			signature_section_size: file.read_u32::<LittleEndian>()?
 		},
 		it => return Err( VpkError::UnsupportedVersion( it ) )
 	};
