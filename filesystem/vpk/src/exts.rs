@@ -1,3 +1,4 @@
+use std::mem::size_of;
 use byteorder::ReadBytesExt;
 
 pub trait ReadNullStringExt: std::io::Read {
@@ -17,3 +18,13 @@ pub trait ReadNullStringExt: std::io::Read {
 }
 
 impl<R: std::io::Read + ?Sized> ReadNullStringExt for R { }
+
+pub trait SizedSizeExt: Sized {
+	#[inline]
+	fn type_size() -> usize {
+		size_of::<Self>()
+	}
+}
+
+impl<R: Sized> SizedSizeExt for R { }
+

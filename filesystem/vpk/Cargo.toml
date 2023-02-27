@@ -10,3 +10,4 @@
 [dependencies]
 	thiserror = '1.0.38'
 	byteorder = '1.4.3'
+	zerocopy = '0.7.0-alpha.2'
