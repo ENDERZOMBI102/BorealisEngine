@@ -3,7 +3,10 @@ Game:
   - bin:                        # folder with all the engine binaries
       - angelscript.dll         # dll containing the angelscript uscript bindings + runtime
       - python.dll              # dll containing the python uscript bindings + runtime
-      - fmod.dll                # dll containing the fmod audio engine
+      - squirrel3.dll           # dll containing the squirrel3 uscript bindings + runtime
+      - GPUUtilities.dll        # steam audio: gpu acceleration (NVIDIA)
+      - phonon.dll              # steam audio: audio engine
+      - TrueAudioNext.dll       # steam audio: gpu acceleration (AMD)
       - rmlui.dll               # contains the RmlUI library
       - uscript.dll             # dll containing the uscript runtime + binding detector
       - pak.dll                 # dll containing the upk and vpk implementations
