@@ -47,8 +47,6 @@ impl CommandLine {
 	}
 }
 
-unsafe impl Sync for CommandLine { }
-
 #[cfg(test)]
 mod testing {
 	use super::*;
