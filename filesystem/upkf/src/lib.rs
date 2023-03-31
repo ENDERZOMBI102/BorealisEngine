@@ -1,3 +1,5 @@
+mod upkf;
+
 use std::collections::HashMap;
 use std::fmt::{Debug, Display, Formatter};
 use std::fs::File;
@@ -7,7 +9,6 @@ use std::path::{Path, PathBuf};
 use std::string::FromUtf8Error;
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use bytes::{Buf, Bytes};
 use thiserror::Error;
 
 
@@ -36,7 +37,7 @@ pub enum UpkfError {
 	#[error("a string wasn't valid utf8")]
 	StringUtf8Error( #[from] FromUtf8Error ),
 	#[error("the entry uses an unknown compression method")]
-	UnknownCompressionMethodError,
+	UnknownCompressionMethodError(String),
 	#[error("error compressing entry with LZMA")]
 	CompressionError( #[from] lzma_rs::error::Error )
 }
@@ -82,7 +83,7 @@ impl TryFrom<u8> for CompressionType {
 			x if x == CompressionType::LZMA as u8 => Ok( CompressionType::LZMA ),
 			x if x == CompressionType::LZMA2 as u8 => Ok( CompressionType::LZMA2 ),
 			x if x == CompressionType::GZIP as u8 => Ok( CompressionType::GZIP ),
-			_ => Err( UpkfError::UnknownCompressionMethodError ),
+			_ => Err( UpkfError::UnknownCompressionMethodError( value.to_string() ) ),
 		}
 	}
 }
@@ -96,14 +97,14 @@ impl TryFrom<&str> for CompressionType {
 			x if x == "LZMA" => Ok( CompressionType::LZMA ),
 			x if x == "LZMA2" => Ok( CompressionType::LZMA2 ),
 			x if x == "GZIP" => Ok( CompressionType::GZIP ),
-			_ => Err( UpkfError::UnknownCompressionMethodError ),
+			_ => Err( UpkfError::UnknownCompressionMethodError(value.to_string()) ),
 		}
 	}
 }
 
 pub struct Upkf {
-	origin: String,  // origin of the pak
-	path: Option<PathBuf>,  // path of the pak file, may be None for in-memory pakfiles
+	origin: String,        // origin of the pak
+	path: Option<PathBuf>, // path of the pak file, may be None for in-memory paks
 	entries: Vec<Element>  // entries
 }
 
@@ -502,19 +503,32 @@ impl UpkfMeta {
 	}
 
 	pub fn serialize(&self, file: &mut File ) -> std::io::Result<()> {
-		let mut map: HashMap<&str, &str> = HashMap::new();
-		map.insert( "compression", self.compression.name() );
-		map.insert( "metadata", &self.string_meta );
-		let binary = self.binary.to_string();
-		map.insert( "binary", &binary );
+		let meta = format!(
+			"compression: {}\nmetadata: {}\nbinary: {}",
+			self.compression.name(),
+			self.string_meta.escape_default(),
+			self.binary
+		);
 
-		file.write_all(json::stringify_pretty(map, 4).as_bytes())
+		file.write_all( meta.as_bytes() )
 	}
 
 	pub fn deserialize( file: &mut File, default_compression: CompressionType ) -> Result<UpkfMeta, UpkfError> {
 		let mut src = String::new();
 		file.read_to_string( &mut src )?;
-		let value = json::parse(src.as_str() );
+		let mut compression = CompressionType::NONE;
+		let mut string_meta = String::new();
+		let mut binary = false;
+		for line in src.lines() {
+			if line.starts_with( "compression: " ) {
+				compression = CompressionType::try_from( line.strip_prefix( "compression: " ) )?;
+			} else if line.starts_with( "metadata: " ) {
+				string_meta = line.strip_prefix( "metadata: " ).expect( "Something went VERY wrong with Rust's `String::starts_with`" ).to_string();
+			} else if line.starts_with( "binary: " ) {
+				binary = bool::try_from( line.strip_prefix( "binary: " ) )?;
+			}
+		}
+		let value = json::parse( src.as_str() );
 		let mut result = UpkfMeta::default( default_compression );
 		if value.is_ok() {
 			let unwrapped = value.unwrap();
