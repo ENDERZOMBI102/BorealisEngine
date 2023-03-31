@@ -1,77 +1,64 @@
 use std;
+use std::sync::LazyLock;
 
-enum ArgType {
-	Arg, Value
+pub struct CommandLine {
+	exec: String,
+	argv: Vec<String>
 }
 
-struct RawArg {
-	arg_type: ArgType,
-	value: String
-}
-
-impl RawArg {
-	pub(crate) fn is_arg(&self) -> bool {
-		return matches!(self.arg_type, ArgType::Arg)
+impl CommandLine {
+	pub fn get() -> &'static CommandLine {
+		static CLI: LazyLock<CommandLine> = LazyLock::new(|| {
+			let mut args: Vec<String> = std::env::args().collect();
+			let argv = args.split_off(1);
+			CommandLine { exec: args.remove(0), argv }
+		});
+		&CLI
 	}
 
-	pub(crate) fn is_value(&self) -> bool {
-		return !self.is_arg()
+	pub fn flag( &mut self, flag: &'static str ) -> bool {
+		self.argv.iter()
+			.any( |item| item == flag )
 	}
-}
 
-pub struct Argument {
-	key: String,
-	value: Option<String>
-}
+	pub fn option( &self, flag: &str ) -> Option<&String> {
+		self.argv.iter()
+			.enumerate()
+			.find( |(_, arg)| arg.as_str() == flag )
+			.map( |(index, _)| &self.argv[ index + 1 ] )
+	}
 
+	pub fn option_many( &self, flag: &str ) -> Vec<&String> {
+		let mut res = Vec::new();
+		let mut index = 0;
 
-
-
-pub fn main() {
-	let args = std::env::args();
-	let mut exec: Option<String> = None;
-	let mut raw_arguments: Vec<RawArg> = Vec::new();
-	let mut arguments: Vec<Argument> = Vec::new();
-	let mut i = 0;
-
-	for arg in args {
-		if exec.is_none() {
-			exec = Some( arg.clone() )
-		} else {
-			if arg.starts_with("+") || arg.starts_with("-") {
-				raw_arguments.push( RawArg { arg_type: ArgType::Arg, value: arg } );
+		while index < self.argv.len() {
+			if self.argv[index] == flag {
+				res.push( &self.argv[ index + 1 ] );
 			} else {
-				raw_arguments.push( RawArg { arg_type: ArgType::Value, value: arg } )
+				index += 1;
 			}
 		}
+		res
 	}
 
-	while i < raw_arguments.len() {
-		if raw_arguments.len() > i + 1 && raw_arguments[i + 1].is_value() {
-			arguments.push(
-				Argument {
-					key: raw_arguments[i].value.clone(),
-					value: Some( raw_arguments[i + 1].value.clone() )
-				}
-			);
-			i += 2;
-		} else {
-			arguments.push(
-				Argument {
-					key: raw_arguments[i].value.clone(),
-					value: None
-				}
-			);
-			i += 1;
-		}
+	pub fn all( &self ) -> &Vec<String> {
+		&self.argv
 	}
+}
 
-	println!( "Executable:\n\t- \"{}\"", exec.unwrap() );
-	println!( "Arguments:" );
-	for arg in arguments {
-		println!( "\t- \"{}\"", arg.key );
-		if arg.value.is_some() {
-			println!( "\t\t- \"{}\"", arg.value.unwrap() )
+unsafe impl Sync for CommandLine { }
+
+#[cfg(test)]
+mod testing {
+	use super::*;
+
+	#[test]
+	pub fn testing() {
+		println!( "Executable:\n\t- \"{}\"", CommandLine::get().exec );
+		println!( "Arguments:" );
+		for arg in &CommandLine::get().argv {
+			println!( "\t- \"{}\"", arg );
 		}
 	}
 }

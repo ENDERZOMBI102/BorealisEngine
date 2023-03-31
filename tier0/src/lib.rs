@@ -1,4 +1,5 @@
 #![feature(string_remove_matches)]
+#![feature(once_cell)]
 
 extern crate core;
 
