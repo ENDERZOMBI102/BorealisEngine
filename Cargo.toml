@@ -16,6 +16,8 @@
 		'renderer', 'richpresence',
 		# individually-runnable generic tools
 		'tools',
+		# library bindings
+		'binding/angelscript' # TODO: Move bindings to their own projects
     ]
 
 [dependencies]
