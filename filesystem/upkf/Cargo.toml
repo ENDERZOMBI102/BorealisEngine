@@ -8,13 +8,11 @@
 	crate_type = [ 'dylib' ]
 
 [dependencies]
-	json = '0.12.4'
 	thiserror = '1.0.38'
 	byteorder = '1.4.3'
-	bytes = '1.1.0'
 	lzma-rs = '0.3.0'
 	libflate = '1.2.0'
 	bzip2 = '0.4.3'
 	crc32fast = '1.3.0'
 	sha256 = '1.0.3'
-
+	zerocopy = '0.7.0-alpha.2'
