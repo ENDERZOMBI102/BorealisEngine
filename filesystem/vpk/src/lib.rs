@@ -124,12 +124,14 @@ impl Vpk {
 
 	fn load_v1( &mut self, file: &mut File, v1: VpkHeaderV1 ) -> Result<(), VpkError> {
 		self.load_tree( file )?;
+		v1;
 
 		Ok(())
 	}
 
 	fn load_v2( &mut self, file: &mut File, v2: VpkHeaderV2 ) -> Result<(), VpkError> {
 		self.load_tree( file )?;
+		v2;
 
 		Ok(())
 	}
@@ -177,14 +179,22 @@ mod tests {
 
 	#[test]
     fn open_vpk_v1() -> Result<(), VpkError> {
-		Vpk::load( "C:/Program Files (x86)/Steam/steamapps/common/Portal 2/portal2_dlc4/pak01_dir.vpk" )?;
+		let vpk = Vpk::load( "C:/Program Files (x86)/Steam/steamapps/common/Portal 2/portal2_dlc4/pak01_dir.vpk" )?;
+
+		for (path, file) in &vpk.files {
+			println!( "{:?} -> {:?}", path, file.entry )
+		}
 
 		Ok(())
 	}
 
 	#[test]
     fn open_vpk_v2() -> Result<(), VpkError> {
-		Vpk::load( "D:/SteamLibrary/steamapps/common/Black Mesa/hl2/hl2_materials_dir.vpk" )?;
+		let vpk = Vpk::load( "D:/SteamLibrary/steamapps/common/Black Mesa/hl2/hl2_materials_dir.vpk" )?;
+
+		for (path, file) in &vpk.files {
+			println!( "{:?} -> {:?}", path, file.entry )
+		}
 
 		Ok(())
 	}
