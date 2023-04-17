@@ -1,8 +1,14 @@
+use zerocopy::{AsBytes, FromBytes};
+
+#[repr(C, packed)]
+#[derive(FromBytes, AsBytes)]
 struct UpkfFileHeader {
 	magic: u32, // 0x55_50_4B_46 'UPKF'
 	version: u8,
 }
 
+#[repr(C, packed)]
+#[derive(FromBytes, AsBytes)]
 struct UpkfHeaderV1 {
 	file_header: UpkfFileHeader,
 	origin_size: u16,
@@ -10,6 +16,8 @@ struct UpkfHeaderV1 {
 	header_crc: u32,
 }
 
+#[repr(C, packed)]
+#[derive(FromBytes, AsBytes)]
 struct UpkfExtDecl {
 	extension_size: u8,
 	extension: String,
@@ -17,6 +25,8 @@ struct UpkfExtDecl {
 	directories: Vec<UpkfDirDecl>,
 }
 
+#[repr(C, packed)]
+#[derive(FromBytes, AsBytes)]
 struct UpkfDirDecl {
 	path_size: u16,
 	path: String,
@@ -24,6 +34,8 @@ struct UpkfDirDecl {
 	entries: Vec<UpkfEntryDecl>,
 }
 
+#[repr(C, packed)]
+#[derive(FromBytes, AsBytes)]
 struct UpkfEntryDecl {
 	name_size: u8,
 	name: String,
@@ -33,7 +45,7 @@ struct UpkfEntryDecl {
 	sha: u32,
 	data: Data, // if size > u8, this contains the index of the data-only pak file containing the data and its offset
 }
-#[repr(transparent)]
+
 enum Data {
 	Inline( Vec<u8> ),
 	External { index: u8, offset: u64 }
