@@ -1,0 +1,11 @@
+[package]
+	name = 'angelscript'
+	version = '0.1.0'
+	edition = '2021'
+	keywords = [ 'angelscript', 'bindings', 'ffi', 'scripting' ]
+
+[dependencies]
+	cxx = '1.0.93'
+
+[build-dependencies]
+	cmake = '0.1.49'
