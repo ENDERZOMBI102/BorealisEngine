@@ -6,3 +6,4 @@ run
 *.upkfmeta
 build
 .idea/discord.xml
+vendor
