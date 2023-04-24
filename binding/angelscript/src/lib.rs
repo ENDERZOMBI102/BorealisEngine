@@ -1,14 +1,15 @@
+use autocxx::prelude::*;
 
-mod ffi {
-
+include_cpp! {
+	#include "angelscript.h"
+	safety!(unsafe)
+	generate!("asITypeInfo")
 }
 
 #[cfg(test)]
 mod tests {
-	use super::ffi::*;
-
-    #[test]
+	#[test]
     fn it_works() {
-
+		
     }
 }

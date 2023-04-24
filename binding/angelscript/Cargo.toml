@@ -2,10 +2,14 @@
 	name = 'angelscript'
 	version = '0.1.0'
 	edition = '2021'
+	description = 'Rust bindings to the AngelScript c++ scripting library'
 	keywords = [ 'angelscript', 'bindings', 'ffi', 'scripting' ]
 
 [dependencies]
+	autocxx = '0.25.0'
 	cxx = '1.0.93'
 
 [build-dependencies]
 	cmake = '0.1.49'
+	autocxx-build = '0.25.0'
+	miette = { version = '5', features = [ 'fancy' ] }
