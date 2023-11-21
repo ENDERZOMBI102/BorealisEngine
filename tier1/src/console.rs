@@ -1,8 +1,9 @@
+use std::sync::OnceLock;
 use log::{Level, LevelFilter, Metadata, Record};
 
-pub struct Console {
-	initialized: bool
-}
+
+pub struct Console;
+
 
 impl log::Log for Console {
 	fn enabled( &self, metadata: &Metadata ) -> bool {
@@ -19,14 +20,12 @@ impl log::Log for Console {
 }
 
 pub fn console() -> &'static Console {
-	unsafe {
-		if !_CONSOLE.initialized {
-			_CONSOLE = Console { initialized: true };
-			log::set_logger( &_CONSOLE ).unwrap();
-			log::set_max_level( LevelFilter::Trace );
-		}
-		&_CONSOLE
-	}
+	let console = _CONSOLE.get_or_init( || Console { } );
+
+	log::set_logger( &_CONSOLE ).unwrap();
+	log::set_max_level( LevelFilter::Trace );
+
+	console
 }
 
-static mut _CONSOLE: Console = Console { initialized: false };
+static _CONSOLE: OnceLock<Console> = OnceLock::new();
