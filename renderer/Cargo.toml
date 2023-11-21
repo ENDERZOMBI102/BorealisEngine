@@ -7,11 +7,11 @@
     crate_type = [ 'dylib' ]
 
 [dependencies]
-	image = '0.24.5'
-	winit = '0.28.1'
+	image = '0.24.7'
+	winit = '0.29.3'
 	cgmath = '0.18.0'
-	log = '0.4.17'
-	wgpu = '0.15.1'
+	log = '0.4.20'
+	wgpu = '0.18.0'
 	pollster = '0.3.0'
-	bytemuck = { version = '1.4', features = [ 'derive' ] }
+	bytemuck = { version = '1.14', features = [ 'derive' ] }
     tier0 = { path = '../tier0' }

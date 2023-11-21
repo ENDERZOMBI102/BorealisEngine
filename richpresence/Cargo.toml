@@ -8,5 +8,5 @@
 
 [dependencies]
     discord-rich-presence = '0.2.3'
-    steamworks = '0.9.0'
+    steamworks = '0.10.0'
     tier0 = { path = '../tier0' }

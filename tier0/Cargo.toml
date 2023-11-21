@@ -7,4 +7,4 @@
     crate_type = [ 'dylib' ]
 
 [dependencies]
-    log = '0.4.17'
+    log = '0.4.20'

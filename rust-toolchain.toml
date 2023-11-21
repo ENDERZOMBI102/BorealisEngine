@@ -1,5 +1,5 @@
 [toolchain]
-    channel = 'nightly-2023-04-19'
-    components = [ 'cargo', 'rustc', 'rust-src', 'rust-std', 'rust-docs' ]
+    channel = 'nightly-2023-11-20'
+    components = [ 'cargo', 'rustc', 'rust-src', 'rust-std' ]
     targets = [ 'x86_64-pc-windows-msvc', 'x86_64-unknown-linux-gnu' ]
     profile = 'minimal'

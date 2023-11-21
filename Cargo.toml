@@ -24,4 +24,4 @@
     richpresence = { path = 'richpresence' }
     tier0 = { path = 'tier0' }
     rand = '0.8.5'
-    log = '0.4.17'
+    log = '0.4.20'

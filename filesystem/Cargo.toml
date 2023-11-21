@@ -8,11 +8,11 @@
     crate_type = [ 'dylib' ]
 
 [dependencies]
-    savefile = '0.12.0'
-    byteorder = '1.4.3'
+    savefile = '0.16.2'
+    byteorder = '1.5.0'
     path-slash = '0.2.1'
     vpk = '0.1.4'
     bin-layout = '7.1.0'
 	upkf = { path = 'upkf' }
     tier0 = { path = '../tier0' }
-    uuid = { version = '1.2.1', features = [ "v4", "fast-rng", "macro-diagnostics" ] }
+    uuid = { version = '1.6.1', features = [ "v4", "fast-rng", "macro-diagnostics" ] }
