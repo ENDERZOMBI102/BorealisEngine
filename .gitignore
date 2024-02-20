@@ -2,8 +2,7 @@ target
 lazy.py
 run
 .idea
-*.upkf
-*.upkfmeta
+*.bpak
 build
 .idea/discord.xml
 vendor

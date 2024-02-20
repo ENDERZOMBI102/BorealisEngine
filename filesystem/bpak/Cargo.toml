@@ -1,8 +1,8 @@
 [package]
-	name = 'upkf'
+	name = 'bpak'
 	version = '0.1.0'
 	edition = '2021'
-	description = 'Library for interacting with Ungine Pak files'
+	description = 'Library for interacting with Borealis PAK archives'
 
 [lib]
 	crate_type = [ 'dylib' ]
@@ -15,4 +15,3 @@
 	bzip2 = '0.4.4'
 	crc32fast = '1.3.2'
 	sha256 = '1.4.0'
-	zerocopy = '0.7.26'

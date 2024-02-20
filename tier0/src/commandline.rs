@@ -1,19 +1,20 @@
 use std;
-use std::sync::LazyLock;
+use std::sync::OnceLock;
 
 pub struct CommandLine {
 	exec: String,
 	argv: Vec<String>
 }
 
+static COMMAND_LINE: OnceLock<CommandLine> = OnceLock::new();
+
 impl CommandLine {
 	pub fn get() -> &'static CommandLine {
-		static CLI: LazyLock<CommandLine> = LazyLock::new(|| {
+		COMMAND_LINE.get_or_init( || {
 			let mut args: Vec<String> = std::env::args().collect();
 			let argv = args.split_off(1);
 			CommandLine { exec: args.remove(0), argv }
-		});
-		&CLI
+		})
 	}
 
 	pub fn flag( &mut self, flag: &'static str ) -> bool {
