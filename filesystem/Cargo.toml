@@ -13,6 +13,8 @@
     path-slash = '0.2.1'
     vpk = '0.1.4'
     bin-layout = '7.1.0'
-	upkf = { path = 'upkf' }
+    json = '0.12.4'
+	bpak = { path = 'bpak' }
     tier0 = { path = '../tier0' }
     uuid = { version = '1.6.1', features = [ "v4", "fast-rng", "macro-diagnostics" ] }
+

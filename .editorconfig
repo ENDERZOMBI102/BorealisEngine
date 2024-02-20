@@ -81,7 +81,7 @@
 [{*.comp,*.frag,*.fsh,*.geom,*.glsl,*.tesc,*.tese,*.vert,*.vsh}]
     ij_glsl_keep_indents_on_empty_lines = false
 
-[{*.json,*.upkfmeta}]
+[*.json]
     ij_json_array_wrapping = split_into_lines
     ij_json_keep_blank_lines_in_code = 0
     ij_json_keep_indents_on_empty_lines = false

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt::Debug;
 use filesystem::layered::LayeredFS;
 
-pub(crate) fn parseHandler(fs: &mut LayeredFS, mut args: Vec<&str>, currentDir: &mut String ) {
+pub(crate) fn parseHandler( fs: &mut LayeredFS, mut argv: Vec<&str>, cwd: &mut String ) {
 	type Handler<'a> = &'a dyn Fn(&str, &str) -> Box<dyn Debug>;
 	let _handlers = HashMap::<&str, Handler>::new();
 

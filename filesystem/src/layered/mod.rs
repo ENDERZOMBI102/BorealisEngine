@@ -6,7 +6,6 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::layered::layers::folder::FolderLayerProvider;
-use crate::layered::layers::upkf::UpkfLayerProvider;
 use crate::layered::layers::vpk::VpkLayerProvider;
 
 pub mod layers;
@@ -62,7 +61,6 @@ impl<'a> LayeredFS<'a> {
 		LayeredFS {
 			providers: vec![
 				Box::new( FolderLayerProvider { } ),
-				Box::new( UpkfLayerProvider { } ),
 				Box::new( VpkLayerProvider { } )
 			],
 			layers: Vec::new()
