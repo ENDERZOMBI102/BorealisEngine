@@ -1,5 +1,5 @@
 # Borealis Engine
-A Rust game engine, based on ECS, inspired by Valve's Source engine
+A Rust game engine, based on ECS and inspired by Valve's Source engine
 
 Modules:
  - [FileSystem](filesystem): Module with file system-related code 
