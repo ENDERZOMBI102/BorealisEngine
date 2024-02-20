@@ -25,17 +25,18 @@ pub fn main() {
 	let mut input = String::new();
 	let mut currentDir = "/".to_string();
 
-	loop {
+	'outer: loop {
+		// first thing we do is cleaning, as we `break` to here when a command is executed
+		input.clear();
 		print!( ">>> " );
 		std::io::stdout().flush().expect("Failed to flush STDOUT");
 		match std::io::stdin().read_line( &mut input ) {
 			Ok(_n) => {
-				input.remove_matches("\n");
-				input.remove_matches("\r");
+				input.clear().extend( input.trim() );
 				let command: Vec<&str> = input.split(" ").collect();
 
 				match command.as_slice() {
-					[ "help", "help" ] => { // help w/parameter command
+					[ "help", "help" ] => { // help w/help as parameter command
 						println!("help: Prints this message")
 					}
 					[ "help", cmd ] => { // help w/parameter command
@@ -55,15 +56,17 @@ pub fn main() {
 
 				// FIXME: This errors
 				// handle command
-				// match commands.get( command[0] ) {
-				// 	// registered command to execute
-				// 	Some( ( handler, _ ) ) => handler.call( ( &mut fs, command, &mut currentDir ) ),
-				// 	// unknown command
-				// 	None => eprintln!( "ERROR: Unknown command {}", command[0] )
-				// }
+				for hdlr in commands {
+					if hdlr.name == command[0] {
+						// registered command to execute
+						hdlr.handler( ( &mut fs, &command, &mut currentDir ) );
+						break 'outer
+					}
+				}
+				// unknown command
+				eprintln!( "ERROR: Unknown command {}", command[0] )
 			}
 			Err(error) => eprintln!( "ERROR: {error}" )
 		}
-		input.clear()
 	}
 }

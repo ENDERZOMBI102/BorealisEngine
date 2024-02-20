@@ -2,15 +2,15 @@ use std::path::Path;
 
 use filesystem::layered::LayeredFS;
 
-pub(crate) fn layerHandler( fs: &mut LayeredFS, mut args: Vec<&str>, currentDir: &mut String ) {
-	args.remove(0); // remove "layer" prefix
-	match args.as_slice() {
+pub(crate) fn layerHandler( fs: &mut LayeredFS, mut argv: Vec<&str>, cwd: &mut String ) {
+	argv.remove(0); // remove "layer" prefix
+	match argv.as_slice() {
 		[ "help" ] => {
 			println!( "Layer manager v1.1" );
 			println!( "usage: layer ( help | list | reverse | ( append | prepend ) $PATH )" );
 			println!( "\thelp              prints this message" );
-			println!( "\tappend     $PATH  Adds a layer to the end of the fs, may be a path to a folder or .upkf/.vpk file" );
-			println!( "\tprepend    $PATH  Adds a layer to the start of the fs, may be a path to a folder or .upkf/.vpk file" );
+			println!( "\tappend     $PATH  Adds a layer to the end of the fs, may be a path to a folder or .bpak/.vpk file" );
+			println!( "\tprepend    $PATH  Adds a layer to the start of the fs, may be a path to a folder or .bpak/.vpk file" );
 			println!( "\tlist              list all available layers" );
 			println!( "\treverse           reverse the order of the layer list" );
 		}

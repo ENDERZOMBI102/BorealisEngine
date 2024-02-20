@@ -9,7 +9,7 @@ Game:
       - TrueAudioNext.dll       # steam audio: gpu acceleration (AMD)
       - rmlui.dll               # contains the RmlUI library
       - uscript.dll             # dll containing the uscript runtime + binding detector
-      - pak.dll                 # dll containing the upk and vpk implementations
+      - pak.dll                 # dll containing the bpak and vpk implementations
       - filesystem.dll          # dll containing the fs interface
       - renderer.dll            # dll containing the renderer
       - richpresence.dll        # dll containing the various rich presence clients ( steam, discord, etc )
@@ -27,11 +27,11 @@ Game:
       - save:                   # contains quick-saves and full-saves
           - mapname_saveid.save # contains a serialized game state, map-name is the map the save was made on
       - maps:                   # contains the game's maps
-          - mapname.otp | bsp   # our map format is based off octrees, but we also support source's BSP ( or at least convert it at load-time )
+          - mapname.otp | bsp   # our map format is based off octrees, but we should also support source's BSP ( or at least convert it at load-time )
       - screenshots:            # contain screenshots
           - mapname_date.png
       - scripts:                # contains the game's scripts
-          - uscript:            # stands for ungine script
+          - uscript:            # stands for unified script
               - gamescript0.as  # angelscript script, names MUST be unique, as extension is only for runtime specification
               - gamescript1.py  # python script
               - gamescript2.nut # squirrel script
