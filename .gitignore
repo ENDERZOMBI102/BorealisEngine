@@ -6,3 +6,4 @@ run
 build
 .idea/discord.xml
 vendor
+Cargo.lock
