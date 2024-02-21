@@ -34,7 +34,7 @@ struct BPKFileHeader {
 align(1)
 struct BPKMainHeaderV1 {
 	BPKFileHeader fileHeader; // Include the file header, this is how the compatibility with earlier versions work.
-	ubyte  originSize;        // The size of the "origin" field.
+	uint  originSize;         // The size of the "origin" field.
 	char[] origin;            // An array of ASCII characters with size $originSize; The origin is usually
 	                          // either the game's or mod's name.
 	ushort metadataSize;      // The size of the "metadata" field.
@@ -77,8 +77,7 @@ struct BPKPathDecl {
  */
 enum CType {
 	None = 0,
-	LZMA,
-	LZMA2,
+	LZHAM,
 	GZIP
 }
 
@@ -86,7 +85,7 @@ enum CType {
  * Rerepresents either the contents of the entry itself,
  * or its location in the auxiliary archive files.
  */
-union Data {
+union Content {
 	ubyte[]  bytes;    // Contents of the entry.
 	Location location; // Location of the data.
 }
@@ -112,8 +111,8 @@ align(1)
 struct BPKEntryDecl {
 	ubyte  nameSize;         // The size of the "name" field.
 	char[] name;             // The name of the file.
-	uint   size;             // The size in bytes of the contents on disk. If this is less than 255,
-	                         // the data is inlined in the main file.
+	uint   size;             // The size in bytes of the contents on disk.
+ bool   inlined;          // Wether the data has been inlined in the main archive or is in an auxiliary file.
 	CType  compressionType;  // The compression method which was used for this file's contents.
 	ubyte  compressionLevel; // The compression level this file's contents have been compressed with,
 	                         // the method may not use this, and in which case it should be set to 255.
@@ -121,7 +120,7 @@ struct BPKEntryDecl {
 	                         // pre-allocate a buffer with enough space for all at once.
 	uint   crc32;            // The crc32 of the entry's contents.
 	char[64] sha256;         // The sha256 of the entry's contents.
-	Data   data;             // The data or location of the contents.
+	Content content;         // The data or location of the contents.
 }
 
 // -------- AUXILIARY FILE --------
@@ -133,7 +132,7 @@ struct BPKEntryDecl {
 align(1)
 struct BPKAuxiliaryHeaderV1 {
 	BPKFileHeader fileHeader; // Include the file header, this is how the compatibility with earlier versions work.
-	ubyte pakNameSize;        // The size of the "pakName" field.
+	ushort pakNameSize;       // The size of the "pakName" field.
 	char[] pakName;           // An array of ASCII characters with size $originSize; Contains the name of the
 	                          // archive this file contains the data of.
 	uint headerCrc;           // The CRC32 of the header, this this doesn't match impls should treat the file as illegal.
